@@ -1,24 +1,94 @@
-# Compiled class file
+######################################
+# OS / 시스템 환경 파일
+######################################
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+######################################
+# IDE / 에디터 환경 파일
+######################################
+# IntelliJ IDEA / Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# STS / Eclipse
+.settings/
+.project
+.classpath
+.apt_generated/
+.springBeans
+
+# VSCode
+.vscode/
+.history/
+
+# 기타 에디터 (NetBeans, Sublime, Atom 등)
+nbproject/private/
+sftp-config.json
+*.sublime-workspace
+*.sublime-project
+.atom/
+
+######################################
+# 빌드 아웃풋 / 의존성 캐시
+######################################
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Maven (혹시 혼합 사용 시)
+target/
+
+# Java / Kotlin
 *.class
-
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
 *.jar
 *.war
-*.nar
 *.ear
 *.zip
+*.nar
 *.tar.gz
 *.rar
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+######################################
+# 로그 / 임시파일
+######################################
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+*.backup
+
+######################################
+# 환경변수 / 시크릿
+######################################
+application-*.yml
+application-*.properties
+.env
+.env.local
+.env.*.local
+
+######################################
+# Tomcat / 서버 런타임
+######################################
+# 내장 Tomcat temp/logs
+tomcat.*/  
+logs/
+temp/
