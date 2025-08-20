@@ -1,5 +1,6 @@
 package com.create.chacha.config.security;
 
+import com.create.chacha.common.util.JwtTokenProvider;
 import com.create.chacha.domains.shared.constants.MemberRoleEnum;
 import com.create.chacha.domains.shared.member.serviceimpl.MemberSecurityService;
 import lombok.RequiredArgsConstructor;
