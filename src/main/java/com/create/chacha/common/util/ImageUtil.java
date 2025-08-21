@@ -1,11 +1,10 @@
 package com.create.chacha.common.util;
 
 import net.coobird.thumbnailator.Thumbnails;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 public class ImageUtil {
@@ -30,27 +29,16 @@ public class ImageUtil {
         return new ByteArrayInputStream(os.toByteArray());
     }
 
-    // InputStream → 썸네일 생성 (300px 기준)
+    // InputStream → 썸네일 생성
     public static InputStream createThumbnail(InputStream inputStream) throws IOException {
         BufferedImage image = ImageIO.read(inputStream);
         if (image == null) throw new IllegalArgumentException("이미지를 읽을 수 없습니다.");
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         Thumbnails.of(image)
-                .size(300, 300)
+                .size(300, 300) // 섬네일 크기 조정을 원하면 이 파라미터 변경
                 .outputFormat("webp")
                 .toOutputStream(os);
         return new ByteArrayInputStream(os.toByteArray());
-    }
-
-    /**
-     * 원본과 썸네일 URL을 반환하는 Map
-     * { "original": 원본URL, "thumbnail": 썸네일URL }
-     */
-    public static Map<String, String> getImageUrls(String originalKey, String thumbnailKey, String bucketName) {
-        Map<String, String> urls = new HashMap<>();
-        urls.put("original", "https://" + bucketName + ".s3.amazonaws.com/" + originalKey);
-        urls.put("thumbnail", "https://" + bucketName + ".s3.amazonaws.com/" + thumbnailKey);
-        return urls;
     }
 }
