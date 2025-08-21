@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 @EntityListeners(value = AuditingEntityListener.class) // 변경이 일어나면 자동으로 넣어줌
 public class ReviewLikeEntity{
 

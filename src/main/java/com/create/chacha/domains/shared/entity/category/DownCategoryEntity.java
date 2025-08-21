@@ -1,10 +1,7 @@
 package com.create.chacha.domains.shared.entity.category;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 /**
  * 하위 카테고리 엔티티
@@ -25,6 +22,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(callSuper = true, exclude = {"upCategory"})
 public class DownCategoryEntity{
 
     /**

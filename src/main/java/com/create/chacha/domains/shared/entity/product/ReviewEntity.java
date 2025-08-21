@@ -29,6 +29,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 public class ReviewEntity extends BaseEntity {
 
     /** 리뷰 ID (AUTO_INCREMENT) */
