@@ -73,6 +73,9 @@ dependencies {
     // Webp 변환
     // https://mvnrepository.com/artifact/org.sejda.imageio/webp-imageio
     implementation 'org.sejda.imageio:webp-imageio:0.1.6'
+
+    // Swagger 설정
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
 }
 
 sourceSets {
