@@ -6,6 +6,9 @@ import com.create.chacha.domains.shared.entity.BaseEntity;
 import com.create.chacha.domains.shared.entity.member.MemberAddressEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,11 +41,12 @@ import java.util.Random;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OrderInfoEntity extends BaseEntity {
+@EntityListeners(value = AuditingEntityListener.class) // 변경이 일어나면 자동으로 넣어줌
+public class OrderInfoEntity {
 
     /** 주문 ID (UUID) */
     @Id
-    @Column(length = 36)
+    @Column(columnDefinition = "CHAR(36)")
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
@@ -53,35 +57,42 @@ public class OrderInfoEntity extends BaseEntity {
 
     /** 날짜+주문번호+순서를 조합한 유효 ID */
     @Convert(converter = AESConverter.class)
-    @Column(name = "order_number", nullable = false, length = 50, unique = true)
     private String orderNumber;
 
     /** 수령인 이름 */
     @Convert(converter = AESConverter.class)
-    @Column(nullable = false, length = 50)
     private String name;
 
     /** 수령인 전화번호 */
     @Convert(converter = AESConverter.class)
-    @Column(nullable = false, length = 20)
     private String phone;
 
     /** 주문 상태 (주문 완료, 발송 완료, 배송 완료, 취소 요청, 취소 완료, 환불 요청, 환불 완료 등) */
-    @Column(nullable = false, length = 50)
+    @Enumerated(EnumType.STRING)
     private OrderInfoStatusEnum status;
 
     /** 주문에 포함된 총 금액 */
-    @Column(name = "total_amount", nullable = false)
     private Integer totalAmount;
 
     /** 결제 키 (토스 페이먼츠 API) */
     @Convert(converter = AESConverter.class)
-    @Column(name = "payment_key", nullable = false, length = 255)
     private String paymentKey;
 
     /** 주문 상세 리스트 */
     @OneToMany(mappedBy = "orderInfo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderDetailEntity> orderDetails;
+
+    /*
+     * 생성 시간
+     */
+    @CreatedDate
+    @Column(updatable = false)
+    LocalDateTime createdAt;
+    /*
+     * 수정 시간
+     */
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
 
     /** 주문 번호 생성 */
     @PrePersist

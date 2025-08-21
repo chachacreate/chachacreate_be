@@ -25,7 +25,7 @@ public class SellerEntity extends BaseEntity {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     /**
      * 판매자 계정 (회원과 1:1 관계)
@@ -38,13 +38,11 @@ public class SellerEntity extends BaseEntity {
      * 판매 수익 정산 계좌 번호
      */
     @Convert(converter = AESConverter.class)
-    @Column(nullable = false, length = 100)
     private String account;
 
     /**
      * 판매 수익 정산 계좌 은행
      */
     @Convert(converter = AESConverter.class)
-    @Column(nullable = false, length = 50)
     private String bank;
 }

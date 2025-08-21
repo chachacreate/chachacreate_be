@@ -4,6 +4,11 @@ import com.create.chacha.domains.shared.constants.AcceptStatusEnum;
 import com.create.chacha.domains.shared.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 /**
  * 이력서 엔티티
@@ -13,14 +18,15 @@ import lombok.*;
  * BaseEntity를 상속받아 생성/수정 시간을 자동 관리.
  */
 @Entity
-@Table(name = "resume")
+@Table(name = "store_resume")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @ToString(callSuper = true, exclude = {"store"})
-public class StoreResumeEntity extends BaseEntity {
+@EntityListeners(value = AuditingEntityListener.class) // 변경이 일어나면 자동으로 넣어줌
+public class StoreResumeEntity{
 
     /**
      * 이력서 ID (자동 증가)
@@ -40,6 +46,16 @@ public class StoreResumeEntity extends BaseEntity {
      * 이력서 검증 상태
      */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
     private AcceptStatusEnum status = AcceptStatusEnum.PENDING;
+    /*
+     * 생성 시간
+     */
+    @CreatedDate
+    @Column(updatable = false)
+    LocalDateTime createdAt;
+    /*
+     * 수정 시간
+     */
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
 }

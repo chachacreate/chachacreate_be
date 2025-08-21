@@ -37,7 +37,6 @@ public class DownCategoryEntity{
     /**
      * 하위 카테고리 이름
      */
-    @Column(nullable = false, length = 100)
     private String name;
 
     /**

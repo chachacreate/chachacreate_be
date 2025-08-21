@@ -40,6 +40,5 @@ public class UpCategoryEntity {
     /**
      * 상위 카테고리 이름
      */
-    @Column(nullable = false, length = 100, unique = true)
     private String name;
 }

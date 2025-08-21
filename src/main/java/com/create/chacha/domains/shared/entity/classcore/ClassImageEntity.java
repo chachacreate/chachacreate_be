@@ -6,6 +6,11 @@ import com.create.chacha.domains.shared.constants.ImageStatusEnum;
 import com.create.chacha.domains.shared.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 /**
  * 클래스 이미지 엔티티
@@ -22,7 +27,8 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @ToString(callSuper = true, exclude = {"classInfo"})
-public class ClassImageEntity extends BaseEntity {
+@EntityListeners(value = AuditingEntityListener.class) // 변경이 일어나면 자동으로 넣어줌
+public class ClassImageEntity {
 
     /**
      * 이미지 기본 키 (AUTO_INCREMENT)
@@ -42,19 +48,34 @@ public class ClassImageEntity extends BaseEntity {
      * 이미지 파일 경로(URL)
      */
     @Convert(converter = AESConverter.class)
-    @Column(nullable = false, length = 500)
     private String url;
 
     /**
      * 이미지 등록 순서 (썸네일 표시 순서에 영향)
      */
-    @Column(nullable = false)
-    private Integer sequence;
+    private Integer imageSequence;
 
     /**
      * 이미지 상태 (DESCRIPTION 또는 THUMBNAIL)
      */
-    @Column(nullable = false, length = 50)
+    @Column(columnDefinition = "TINYINT")
     @Convert(converter = ImageStatusEnumConverter.class)
     private ImageStatusEnum status;
+
+    /*
+     * 생성 시간
+     */
+    @CreatedDate
+    @Column(updatable = false)
+    LocalDateTime createdAt;
+    /*
+     * 삭제 시간
+     */
+    private LocalDateTime deletedAt;
+
+    /*
+     * 삭제 여부
+     */
+    @Column(nullable = false, name = "is_deleted", columnDefinition = "TINYINT")
+    private Boolean isDeleted;
 }

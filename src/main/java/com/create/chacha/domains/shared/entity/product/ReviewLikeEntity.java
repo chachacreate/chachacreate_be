@@ -4,6 +4,11 @@ import com.create.chacha.domains.shared.entity.BaseEntity;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 /**
  * 리뷰 좋아요 엔티티
@@ -25,7 +30,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ReviewLikeEntity extends BaseEntity {
+@EntityListeners(value = AuditingEntityListener.class) // 변경이 일어나면 자동으로 넣어줌
+public class ReviewLikeEntity{
 
     /** 좋아요 ID (AUTO_INCREMENT) */
     @Id
@@ -41,5 +47,21 @@ public class ReviewLikeEntity extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private MemberEntity member;
+    /*
+     * 생성 시간
+     */
+    @CreatedDate
+    @Column(updatable = false)
+    LocalDateTime createdAt;
+    /*
+     * 삭제 시간
+     */
+    private LocalDateTime deletedAt;
+
+    /*
+     * 삭제 여부
+     */
+    @Column(nullable = false, name = "is_deleted", columnDefinition = "TINYINT")
+    private Boolean isDeleted;
 }
 

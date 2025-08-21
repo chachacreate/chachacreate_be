@@ -24,23 +24,20 @@ public class StoreFontEntity {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     /**
      * 글꼴명
      */
-    @Column(nullable = false, length = 100)
     private String name;
 
     /**
      * 글꼴 스타일 (예: Regular, Bold, Italic 등)
      */
-    @Column(nullable = false, length = 50)
     private String style = "Regular";
 
     /**
      * 글꼴이 저장된 경로(URL)
      */
-    @Column(nullable = false, length = 500)
     private String url;
 }

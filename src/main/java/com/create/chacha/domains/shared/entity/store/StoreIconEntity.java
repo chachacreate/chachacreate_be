@@ -24,23 +24,20 @@ public class StoreIconEntity {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     /**
      * 아이콘 이름
      */
-    @Column(nullable = false, length = 100)
     private String name;
 
     /**
      * 사용자용 아이콘 설명
      */
-    @Column(length = 255)
     private String content;
 
     /**
      * 아이콘이 저장된 경로(URL)
      */
-    @Column(length = 500)
     private String url;
 }

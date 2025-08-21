@@ -25,7 +25,7 @@ public class ReportEntity extends BaseEntity {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     /**
      * 신고 당한 회원 (피신고자)
@@ -44,13 +44,12 @@ public class ReportEntity extends BaseEntity {
     /**
      * 신고 내용
      */
-    @Column(nullable = false, length = 1000)
     private String content;
 
     /**
      * 신고 처리 상태
      * <p>0: 미처리, 1: 처리 완료</p>
      */
-    @Column(nullable = false)
+    @Column(columnDefinition = "TINYINT")
     private ReportStatusEnum status = ReportStatusEnum.UNPROCESSED;
 }

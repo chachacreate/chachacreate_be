@@ -29,7 +29,7 @@ public class SecurityUser extends User {
     //Role을 여러개 가질수 있도록 되어있음
     private static List<GrantedAuthority> makeRole(MemberEntity member) {
         List<GrantedAuthority> roleList = new ArrayList<>();
-        roleList.add(new SimpleGrantedAuthority(ROLE_PREFIX + member.getRole()));
+        roleList.add(new SimpleGrantedAuthority(ROLE_PREFIX + member.getMemberRole()));
         return roleList;
     }
     //User class에서 username필드가 있지만 google 인증시 사용되는 필드는 name 이를 맞추기위해 함수 추가함

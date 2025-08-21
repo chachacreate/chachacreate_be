@@ -3,6 +3,11 @@ package com.create.chacha.domains.shared.entity.store;
 import com.create.chacha.domains.shared.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 /**
  * 스토어 커스터마이징(디자인) 정보 엔티티
@@ -17,20 +22,21 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @ToString(callSuper = true)
-public class StoreCustomEntity extends BaseEntity {
+@EntityListeners(value = AuditingEntityListener.class) // 변경이 일어나면 자동으로 넣어줌
+public class StoreCustomEntity{
 
     /**
      * StoreEntity의 PK를 공유하는 기본 키 (FK & PK)
      */
     @Id
-    private Integer id;
+    private Long id;
 
     /**
      * 스토어 (PK + FK 매핑)
      */
     @MapsId
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id") // store_custom.id = store.id
+    @JoinColumn(name = "store_id") // store_custom.id = store.id
     private StoreEntity store;
 
     /**
@@ -50,30 +56,37 @@ public class StoreCustomEntity extends BaseEntity {
     /**
      * 기본 글자 색상 (default: #000000)
      */
-    @Column(name = "font_color", nullable = false, length = 20)
     private String fontColor = "#000000";
 
     /**
      * 헤더/푸터 색상 (default: #676F58)
      */
-    @Column(name = "header_footer_color", nullable = false, length = 20)
     private String headerFooterColor = "#676F58";
 
     /**
      * 공지사항 색상 (default: #FFF7DB)
      */
-    @Column(name = "notice_color", nullable = false, length = 20)
     private String noticeColor = "#FFF7DB";
 
     /**
      * 스토어 설명 영역 색상 (default: #FFF6EE)
      */
-    @Column(name = "description_color", nullable = false, length = 20)
     private String descriptionColor = "#FFF6EE";
 
     /**
      * 인기상품/대표상품 색상 (default: #FFF7DB)
      */
-    @Column(name = "popular_color", nullable = false, length = 20)
     private String popularColor = "#FFF7DB";
+
+    /*
+     * 생성 시간
+     */
+    @CreatedDate
+    @Column(updatable = false)
+    LocalDateTime createdAt;
+    /*
+     * 수정 시간
+     */
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
 }

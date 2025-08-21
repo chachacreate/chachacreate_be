@@ -3,6 +3,10 @@ package com.create.chacha.domains.shared.entity.order;
 import com.create.chacha.domains.shared.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 /**
  * 주문 환불 엔티티
@@ -25,7 +29,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OrderRefundEntity extends BaseEntity {
+@EntityListeners(value = AuditingEntityListener.class) // 변경이 일어나면 자동으로 넣어줌
+public class OrderRefundEntity {
 
     /** 환불 ID (AUTO_INCREMENT) */
     @Id
@@ -38,11 +43,15 @@ public class OrderRefundEntity extends BaseEntity {
     private OrderDetailEntity orderDetail;
 
     /** 환불 사유 */
-    @Column(nullable = false, length = 255)
     private String content;
 
     /** 환불 금액 */
-    @Column(nullable = false)
     private Integer amount;
+    /*
+     * 생성 시간
+     */
+    @CreatedDate
+    @Column(updatable = false)
+    LocalDateTime createdAt;
 }
 

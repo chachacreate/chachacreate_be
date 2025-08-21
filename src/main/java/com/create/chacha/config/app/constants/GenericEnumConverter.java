@@ -5,15 +5,11 @@ import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
 /**
- * 숫자형 Enum DB 매핑 컨버터
- * <p>
+ * Boolean 기반 Enum DB 매핑 컨버터
  * 모든 PersistableEnum에 대해 재사용 가능
- * </p>
- *
- * @param <E> PersistableEnum 타입
  */
 @Converter(autoApply = true)
-public class GenericEnumConverter<E extends Enum<E> & PersistableEnum> implements AttributeConverter<E, Integer> {
+public class GenericEnumConverter<E extends Enum<E> & PersistableEnum> implements AttributeConverter<E, Boolean> {
 
     private final Class<E> enumClass;
 
@@ -22,22 +18,17 @@ public class GenericEnumConverter<E extends Enum<E> & PersistableEnum> implement
     }
 
     @Override
-    public Integer convertToDatabaseColumn(E attribute) {
-        return attribute != null ? attribute.getValue() : null;
+    public Boolean convertToDatabaseColumn(E attribute) {
+        return attribute != null ? attribute.isValue() : null;
     }
 
     @Override
-    public E convertToEntityAttribute(Integer dbData) {
+    public E convertToEntityAttribute(Boolean dbData) {
         if (dbData == null) return null;
 
-        try {
-            for (E e : enumClass.getEnumConstants()) {
-                if (e.getValue() == dbData) return e;
-            }
-        } catch (Exception ex) {
-            throw new IllegalArgumentException("Unknown database value: " + dbData + " for enum " + enumClass.getSimpleName());
+        for (E e : enumClass.getEnumConstants()) {
+            if (e.isValue() == dbData) return e;
         }
-
         throw new IllegalArgumentException("Unknown database value: " + dbData + " for enum " + enumClass.getSimpleName());
     }
 }

@@ -4,16 +4,16 @@ import lombok.Getter;
 
 @Getter
 public enum SellerSettlementEnum implements PersistableEnum {
-    UNSETTLED(0),
-    SETTLED(1);
+    UNSETTLED(false),
+    SETTLED(true);
 
-    private final int value;
+    private final boolean value;
 
-    SellerSettlementEnum(int value) {
+    SellerSettlementEnum(boolean value) {
         this.value = value;
     }
 
-    public static SellerSettlementEnum fromValue(int value) {
+    public static SellerSettlementEnum fromValue(boolean value) {
         for (SellerSettlementEnum status : values()) {
             if (status.value == value) return status;
         }

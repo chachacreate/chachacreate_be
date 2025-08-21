@@ -39,44 +39,37 @@ public class StoreEntity extends BaseEntity {
     /**
      * 스토어 로고 이미지 경로
      */
-    @Column(nullable = false, length = 255)
     @Convert(converter = AESConverter.class)
     private String logo;
 
     /**
      * 스토어명
      */
-    @Column(nullable = false, length = 100)
     private String name;
 
     /**
      * 스토어 설명
      */
-    @Column(length = 1000)
     private String content;
 
     /**
      * 스토어 URL (중복 불가, 변경 불가)
      */
-    @Column(nullable = false, unique = true, length = 255)
     private String url;
 
     /**
      * 스토어 상품들의 총 판매 수 합계
      */
-    @Column(name = "sale_count", nullable = false)
     private Integer saleCount = 0;
 
     /**
      * 스토어 상품들의 총 조회 수 합계
      */
-    @Column(name = "view_count", nullable = false)
     private Integer viewCount = 0;
 
     /**
      * 스토어 상태 (예: ACTIVE, INACTIVE, SUSPENDED 등)
      */
-    @Column(nullable = false, length = 50)
     private AcceptStatusEnum status;
 
     /**

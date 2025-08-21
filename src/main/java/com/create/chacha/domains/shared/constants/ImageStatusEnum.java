@@ -4,16 +4,16 @@ import lombok.Getter;
 
 @Getter
 public enum ImageStatusEnum implements PersistableEnum {
-    DESCRIPTION(0),
-    THUMBNAIL(1);
+    DESCRIPTION(false),
+    THUMBNAIL(true);
 
-    private final int value;
+    private final boolean value;
 
-    ImageStatusEnum(int value) {
+    ImageStatusEnum(boolean value) {
         this.value = value;
     }
 
-    public static ImageStatusEnum fromValue(int value) {
+    public static ImageStatusEnum fromValue(boolean value) {
         for (ImageStatusEnum status : values()) {
             if (status.value == value) return status;
         }

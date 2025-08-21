@@ -7,6 +7,11 @@ import com.create.chacha.domains.shared.entity.BaseEntity;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 /**
  * 판매자 정산 엔티티
@@ -23,7 +28,8 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @ToString(callSuper = true, exclude = {"seller"})
-public class SellerSettlementEntity extends BaseEntity {
+@EntityListeners(value = AuditingEntityListener.class) // 변경이 일어나면 자동으로 넣어줌
+public class SellerSettlementEntity{
 
     /**
      * 정산 ID (자동 증가)
@@ -42,8 +48,6 @@ public class SellerSettlementEntity extends BaseEntity {
     /**
      * 월별 정산 금액
      */
-    @Convert(converter = AESConverter.class)
-    @Column(nullable = false)
     private Integer amount;
 
     /**
@@ -53,7 +57,18 @@ public class SellerSettlementEntity extends BaseEntity {
      *     <li>1 = 정산 완료</li>
      * </ul>
      */
-    @Column(nullable = false)
     @Convert(converter = SellerSettlementEnumConverter.class)
+    @Column(columnDefinition = "TINYINT")
     private SellerSettlementEnum status;
+    /*
+     * 생성 시간
+     */
+    @CreatedDate
+    @Column(updatable = false)
+    LocalDateTime createdAt;
+    /*
+     * 수정 시간
+     */
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
 }

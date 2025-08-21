@@ -6,6 +6,9 @@ import com.create.chacha.domains.shared.entity.BaseEntity;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -26,13 +29,14 @@ import java.util.Random;
 @AllArgsConstructor
 @Builder
 @ToString(callSuper = true, exclude = {"classInfo", "member"})
-public class ClassReservationEntity extends BaseEntity {
+@EntityListeners(value = AuditingEntityListener.class) // 변경이 일어나면 자동으로 넣어줌
+public class ClassReservationEntity {
 
     /**
      * 예약 기본 키 (UUID)
      */
     @Id
-    @Column(length = 36, nullable = false, updatable = false)
+    @Column(columnDefinition = "CHAR(36)", nullable = false, updatable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
@@ -53,27 +57,36 @@ public class ClassReservationEntity extends BaseEntity {
     /**
      * 예약 상태
      */
-    @Column(nullable = false, length = 50)
+    @Enumerated(EnumType.STRING)
     private OrderAndReservationStatusEnum status;
 
     /**
      * 사용자에게 보여지는 예약 번호
      */
-    @Column(name = "reservation_number", nullable = false, length = 50, unique = true)
     private String reservationNumber;
 
     /**
      * 토스 페이먼츠 결제 키
      */
     @Convert(converter = AESConverter.class)
-    @Column(name = "payment_key", nullable = false, length = 100)
     private String paymentKey;
 
     /**
      * 예약한 클래스 시간
      */
-    @Column(name = "reserved_time", nullable = false)
     private LocalDateTime reservedTime;
+
+    /*
+     * 생성 시간
+     */
+    @CreatedDate
+    @Column(updatable = false)
+    LocalDateTime createdAt;
+    /*
+     * 수정 시간
+     */
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
 
     /** 예약 번호 생성 */
     @PrePersist

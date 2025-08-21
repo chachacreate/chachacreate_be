@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * 클래스 휴일 정보 엔티티
@@ -27,7 +28,7 @@ public class ClassHolidayEntity extends BaseEntity {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     /**
      * 휴일이 속한 클래스
@@ -39,12 +40,10 @@ public class ClassHolidayEntity extends BaseEntity {
     /**
      * 휴일 이름
      */
-    @Column(nullable = false, length = 100)
     private String name;
 
     /**
      * 휴일 날짜
      */
-    @Column(name = "rest_date", nullable = false)
-    private LocalDate restDate;
+    private LocalDateTime restDate;
 }

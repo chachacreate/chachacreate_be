@@ -5,6 +5,8 @@ import com.create.chacha.domains.shared.entity.member.MemberEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 /**
  * 리뷰 엔티티
  * <p>
@@ -45,10 +47,8 @@ public class ReviewEntity extends BaseEntity {
     private ProductEntity product;
 
     /** 평점 (1.0 ~ 5.0, 0.5 단위) */
-    @Column(nullable = false, precision = 2, scale = 1)
-    private Double rating;
+    private BigDecimal rating;
 
     /** 리뷰 내용 */
-    @Column(columnDefinition = "TEXT")
     private String content;
 }

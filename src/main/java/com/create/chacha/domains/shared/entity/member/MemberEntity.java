@@ -23,13 +23,12 @@ public class MemberEntity extends BaseEntity {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     /**
      * 회원 로그인 ID (이메일)
      * <p>중복 불가</p>
      */
-    @Column(nullable = false, unique = true, length = 255)
     private String email;
 
     /**
@@ -37,14 +36,12 @@ public class MemberEntity extends BaseEntity {
      * <p>한글만 허용, 최대 5글자</p>
      */
     @Convert(converter = AESConverter.class)
-    @Column(nullable = false, length = 50)
     private String name;
 
     /**
      * 비밀번호
      * <p>8자 이상, 특수문자/영문/숫자 포함</p>
      */
-    @Column(nullable = false, length = 255)
     private String password;
 
     /**
@@ -52,14 +49,12 @@ public class MemberEntity extends BaseEntity {
      * <p>정규표현식 검증 필요</p>
      */
     @Convert(converter = AESConverter.class)
-    @Column(nullable = false, length = 20)
     private String phone;
 
     /**
      * 주민등록번호 (뒷자리 한 글자까지 저장)
      */
     @Convert(converter = AESConverter.class)
-    @Column(name = "registration_number", nullable = false, length = 20)
     private String registrationNumber;  // 주민등록번호
 
     /**
@@ -67,6 +62,5 @@ public class MemberEntity extends BaseEntity {
      * <p>USER, SELLER, PERSONAL_SELLER, ADMIN</p>
      */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private MemberRoleEnum role;
+    private MemberRoleEnum memberRole;
 }

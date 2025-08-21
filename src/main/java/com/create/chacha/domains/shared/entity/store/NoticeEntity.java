@@ -25,7 +25,7 @@ public class NoticeEntity extends BaseEntity {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     /**
      * 공지사항이 속한 스토어
@@ -37,19 +37,17 @@ public class NoticeEntity extends BaseEntity {
     /**
      * 공지사항 제목
      */
-    @Column(nullable = false, length = 200)
     private String title;
 
     /**
      * 공지사항 내용
      */
-    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     /**
      * 중요 여부 (일반 : false, 중요 : true)
      */
-    @Column(name = "important_check", nullable = false)
-    private Boolean importantCheck = false;
+    @Column(columnDefinition = "TINYINT")
+    private Boolean isImportant = false;
 }
 

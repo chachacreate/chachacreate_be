@@ -4,6 +4,11 @@ import com.create.chacha.domains.shared.entity.BaseEntity;
 import com.create.chacha.domains.shared.entity.product.ProductEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 /**
  * 장바구니 엔티티
@@ -26,7 +31,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CartEntity extends BaseEntity {
+@EntityListeners(value = AuditingEntityListener.class) // 변경이 일어나면 자동으로 넣어줌
+public class CartEntity {
 
     /** 장바구니 ID (AUTO_INCREMENT) */
     @Id
@@ -44,7 +50,17 @@ public class CartEntity extends BaseEntity {
     private ProductEntity product;
 
     /** 담긴 상품 수량 */
-    @Column(nullable = false)
     private Integer quantity;
-}
 
+    /*
+     * 생성 시간
+     */
+    @CreatedDate
+    @Column(updatable = false)
+    LocalDateTime createdAt;
+    /*
+     * 수정 시간
+     */
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
+}

@@ -48,55 +48,37 @@ public class ProductEntity extends BaseEntity {
     /**
      * 상품명
      */
-    @Column(nullable = false)
     private String name;
 
     /**
      * 상품 가격
      */
-    @Column(nullable = false)
     private Integer price;
 
     /**
      * 상품 설명
      */
-    @Column(columnDefinition = "TEXT")
     private String detail;
 
     /**
      * 상품 재고
      */
-    @Column(nullable = false)
     private Integer stock = 0;
 
     /**
      * 판매된 수량
      */
-    @Column(name = "sale_count", nullable = false)
     private Integer saleCount = 0;
 
     /**
      * 조회 수
      */
-    @Column(name = "view_count", nullable = false)
     private Integer viewCount = 0;
 
     /**
      * 대표 상품 여부 (true: 대표 상품)
      */
-    @Column(name = "is_flagship", nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT")
     private Boolean isFlagship = false;
-
-    /**
-     * 삭제 시각 (Soft Delete 용)
-     */
-    @Column(name = "deleted_at")
-    private java.time.LocalDateTime deletedAt;
-
-    /**
-     * 삭제 여부 (false = 사용 중, true = 삭제됨)
-     */
-    @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted = false;
 }
 

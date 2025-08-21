@@ -4,6 +4,10 @@ import com.create.chacha.config.app.database.AESConverter;
 import com.create.chacha.domains.shared.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 /**
  * 이력서 이미지 엔티티
@@ -19,7 +23,8 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @ToString(callSuper = true, exclude = {"resume"})
-public class ResumeImageEntity extends BaseEntity {
+@EntityListeners(value = AuditingEntityListener.class) // 변경이 일어나면 자동으로 넣어줌
+public class ResumeImageEntity{
 
     /**
      * 이력서 이미지 ID (자동 증가)
@@ -38,26 +43,28 @@ public class ResumeImageEntity extends BaseEntity {
     /**
      * 이미지 파일 경로
      */
-    @Column(nullable = false, length = 1000)
     @Convert(converter = AESConverter.class)
     private String url;
 
     /**
      * 이미지 관련 설명
      */
-    @Column
     private String content;
-
-    /**
-     * 삭제 여부 (0 = 사용 중, 1 = 삭제됨)
+    /*
+     * 생성 시간
      */
-    @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted = false;
-
-    /**
-     * 삭제 시각 (Soft Delete 용)
+    @CreatedDate
+    @Column(updatable = false)
+    LocalDateTime createdAt;
+    /*
+     * 삭제 시간
      */
-    @Column(name = "deleted_at")
-    private java.time.LocalDateTime deletedAt;
+    private LocalDateTime deletedAt;
+
+    /*
+     * 삭제 여부
+     */
+    @Column(nullable = false, name = "is_deleted", columnDefinition = "TINYINT")
+    private Boolean isDeleted;
 }
 

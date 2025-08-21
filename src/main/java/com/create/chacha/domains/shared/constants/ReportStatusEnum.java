@@ -3,17 +3,17 @@ package com.create.chacha.domains.shared.constants;
 import lombok.Getter;
 
 @Getter
-public enum ReportStatusEnum implements PersistableEnum{
-    UNPROCESSED(0),
-    PROCESSED(1);
+public enum ReportStatusEnum implements PersistableEnum {
+    UNPROCESSED(false),
+    PROCESSED(true);
 
-    private final int value;
+    private final boolean value;
 
-    ReportStatusEnum(int value) {
+    ReportStatusEnum(boolean value) {
         this.value = value;
     }
 
-    public static ReportStatusEnum fromValue(int value) {
+    public static ReportStatusEnum fromValue(boolean value) {
         for (ReportStatusEnum status : values()) {
             if (status.value == value) return status;
         }
