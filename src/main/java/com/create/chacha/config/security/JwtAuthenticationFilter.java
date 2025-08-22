@@ -1,7 +1,7 @@
 package com.create.chacha.config.security;
 
 import com.create.chacha.common.util.JwtTokenProvider;
-import com.create.chacha.domains.shared.member.serviceimpl.MemberSecurityService;
+import com.create.chacha.domains.shared.member.serviceimpl.MemberSecurityServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,7 +18,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisTemplate<String, String> redisTemplate;
-    private final MemberSecurityService memberSecurityService;
+    private final MemberSecurityServiceImpl memberSecurityService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
