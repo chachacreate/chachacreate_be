@@ -1,4 +1,4 @@
-package com.create.chacha.domains.shared.member.repository;
+package com.create.chacha.domains.shared.repository;
 
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
 import org.springframework.data.jpa.repository.JpaRepository;

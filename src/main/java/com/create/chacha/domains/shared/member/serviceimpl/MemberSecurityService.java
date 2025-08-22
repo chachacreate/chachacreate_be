@@ -2,7 +2,7 @@ package com.create.chacha.domains.shared.member.serviceimpl;
 
 import com.create.chacha.config.security.SecurityUser;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
-import com.create.chacha.domains.shared.member.repository.MemberRepository;
+import com.create.chacha.domains.shared.repository.MemberRepository;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;

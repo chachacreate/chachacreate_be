@@ -4,7 +4,7 @@ package com.create.chacha.domains.shared.member.serviceimpl;
 import com.create.chacha.common.util.JwtTokenProvider;
 import com.create.chacha.domains.shared.member.dto.response.TokenResponseDTO;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
-import com.create.chacha.domains.shared.member.repository.MemberRepository;
+import com.create.chacha.domains.shared.repository.MemberRepository;
 import com.create.chacha.domains.shared.member.service.MemberLoginService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
