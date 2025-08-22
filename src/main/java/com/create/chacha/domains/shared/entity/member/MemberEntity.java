@@ -62,5 +62,5 @@ public class MemberEntity extends BaseEntity {
      * <p>USER, SELLER, PERSONAL_SELLER, ADMIN</p>
      */
     @Enumerated(EnumType.STRING)
-    private MemberRoleEnum memberRole;
+    private MemberRoleEnum memberRole = MemberRoleEnum.USER;
 }
