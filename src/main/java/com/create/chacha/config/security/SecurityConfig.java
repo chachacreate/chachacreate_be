@@ -2,7 +2,7 @@ package com.create.chacha.config.security;
 
 import com.create.chacha.common.util.JwtTokenProvider;
 import com.create.chacha.domains.shared.constants.MemberRoleEnum;
-import com.create.chacha.domains.shared.member.serviceimpl.MemberSecurityService;
+import com.create.chacha.domains.shared.member.serviceimpl.MemberSecurityServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,7 +20,7 @@ public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisTemplate<String, String> redisTemplate;
-    private final MemberSecurityService memberSecurityService;
+    private final MemberSecurityServiceImpl memberSecurityService;
     private final SecurityProperties securityProperties;
 
     @Bean
