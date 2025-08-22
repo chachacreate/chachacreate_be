@@ -3,6 +3,7 @@ package com.create.chacha.domains.shared.member.controller;
 import com.create.chacha.common.ApiResponse;
 import com.create.chacha.common.constants.ResponseCode;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
+import com.create.chacha.domains.shared.member.dto.request.LoginRequestDTO;
 import com.create.chacha.domains.shared.member.dto.request.RegisterRequestDTO;
 import com.create.chacha.domains.shared.member.dto.response.TokenResponseDTO;
 import com.create.chacha.domains.shared.member.service.MemberLoginService;
@@ -26,8 +27,10 @@ public class AuthController {
 
     // 로그인: AccessToken 바디, RefreshToken은 HttpOnly 쿠키
     @PostMapping("/auth/login")
-    public ApiResponse<TokenResponseDTO> login(@RequestParam String email, @RequestParam String password, HttpServletResponse response) {
-        TokenResponseDTO tokenDTO = authService.login(email, password);
+    public ApiResponse<TokenResponseDTO> login(@RequestBody LoginRequestDTO loginRequest, HttpServletResponse response) {
+        log.info("로그인 요청: {}", loginRequest.getEmail());
+
+        TokenResponseDTO tokenDTO = authService.login(loginRequest.getEmail(), loginRequest.getPassword());
 
         // RefreshToken 쿠키 등록
         ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenDTO.getRefreshToken())
@@ -40,12 +43,12 @@ public class AuthController {
         response.addHeader("Set-Cookie", cookie.toString());
 
         // AccessToken만 반환 (RefreshToken은 쿠키로 설정했으므로 null)
-        TokenResponseDTO responseDTO = new TokenResponseDTO(email, tokenDTO.getAccessToken(), null);
+        TokenResponseDTO responseDTO = new TokenResponseDTO(loginRequest.getEmail(), tokenDTO.getAccessToken(), null);
         return new ApiResponse<>(ResponseCode.LOGIN_SUCCESS, responseDTO);
     }
 
     @PostMapping("/auth/logout")
-    public ApiResponse<Void> logout(@RequestParam String email, @RequestHeader("Authorization") String authHeader, HttpServletResponse response) {
+    public ApiResponse<Void> logout(String email, @RequestHeader("Authorization") String authHeader, HttpServletResponse response) {
         String accessToken = authHeader.substring(7);
         authService.logout(email, accessToken);
 
@@ -62,7 +65,7 @@ public class AuthController {
     }
 
     @PostMapping("/auth/refresh")
-    public ApiResponse<TokenResponseDTO> refresh(@RequestParam String email, @CookieValue(value = "refreshToken", required = false) String refreshToken) {
+    public ApiResponse<TokenResponseDTO> refresh(String email, @CookieValue(value = "refreshToken", required = false) String refreshToken) {
         // refreshToken이 없다면 권한 없음
         if (refreshToken == null) {
             return new ApiResponse<>(ResponseCode.UNAUTHORIZED, null);
