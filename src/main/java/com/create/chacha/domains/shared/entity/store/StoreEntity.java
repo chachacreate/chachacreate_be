@@ -70,6 +70,7 @@ public class StoreEntity extends BaseEntity {
     /**
      * 스토어 상태 (예: ACTIVE, INACTIVE, SUSPENDED 등)
      */
+    @Enumerated(EnumType.STRING)
     private AcceptStatusEnum status;
 
     /**
