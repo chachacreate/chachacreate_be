@@ -1,5 +1,6 @@
 package com.create.chacha.domains.buyer.areas.store.mainproduct.service.serviceimpl;
 
+import com.create.chacha.domains.buyer.areas.store.mainproduct.dto.request.ProductFilterRequestDTO;
 import com.create.chacha.domains.buyer.areas.store.mainproduct.dto.response.ProductResponseDTO;
 import com.create.chacha.domains.buyer.areas.store.mainproduct.repository.ProductQueryRepository;
 import com.create.chacha.domains.buyer.areas.store.mainproduct.service.StoreMainProductService;
@@ -44,5 +45,12 @@ public class StoreMainProductServiceImpl implements StoreMainProductService {
     public List<ProductResponseDTO> getAllProductsByStore(String storeUrl) {
         log.info("스토어 전체상품 조회 Service 실행, storeUrl={}", storeUrl);
         return productQueryRepository.findAllProductsByStore(storeUrl);
+    }
+
+
+    @Override
+    public List<ProductResponseDTO> getFilteredProductsByStore(String storeUrl, ProductFilterRequestDTO filterDTO) {
+        log.info("스토어 전체상품 조회 Service 실행, storeUrl={}, filter={}", storeUrl, filterDTO);
+        return productQueryRepository.findProductsByFilter(storeUrl, filterDTO);
     }
 }

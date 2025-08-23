@@ -1,5 +1,6 @@
 package com.create.chacha.domains.buyer.areas.store.mainproduct.controller;
 
+import com.create.chacha.domains.buyer.areas.store.mainproduct.dto.request.ProductFilterRequestDTO;
 import com.create.chacha.domains.buyer.areas.store.mainproduct.dto.response.ProductResponseDTO;
 import com.create.chacha.domains.buyer.areas.store.mainproduct.service.StoreMainProductService;
 import lombok.RequiredArgsConstructor;
@@ -49,16 +50,22 @@ public class StoreMainProductController {
     }
 
     /**
-     * 특정 스토어의 전체상품 조회
+     * 특정 스토어의 전체상품 조회 (필터링/검색 포함)
      * @param storeUrl 스토어 URL
-     * @return 전체 상품 리스트
+     * @param filterDTO 필터링/검색 조건
+     * @return 상품 리스트
      */
     @GetMapping("/{storeUrl}/products")
     public ResponseEntity<List<ProductResponseDTO>> getAllProductsByStore(
-            @PathVariable("storeUrl") String storeUrl
+            @PathVariable("storeUrl") String storeUrl,
+            @ModelAttribute ProductFilterRequestDTO filterDTO
     ) {
-        log.info("스토어 전체상품 조회 API 호출, storeUrl={}", storeUrl);
-        List<ProductResponseDTO> products = storeMainProductService.getAllProductsByStore(storeUrl);
+        log.info("스토어 전체상품 조회 API 호출, storeUrl={}, filter={}", storeUrl, filterDTO);
+
+        // 필터링/검색 조건이 비어있으면 전체상품 조회, 있으면 조건 적용
+        List<ProductResponseDTO> products = storeMainProductService.getFilteredProductsByStore(storeUrl, filterDTO);
+
         return ResponseEntity.ok(products);
     }
+
 }
