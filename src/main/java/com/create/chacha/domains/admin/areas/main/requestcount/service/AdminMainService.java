@@ -13,4 +13,9 @@ public interface AdminMainService {
      * @return StoreCountResponseDTO
      */
     StoreCountResponseDTO getStoreCounts(String metric);
+    
+    /**
+     * metric(new, pending)에 따른 이력서 건수 조회
+     */
+    StoreCountResponseDTO getResumeCounts(String metric);
 }

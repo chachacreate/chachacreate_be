@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
 @Slf4j
-public class AdminMainController {
+public class AdminCountController {
 
     private final AdminMainService adminMainService;
 
@@ -27,6 +27,18 @@ public class AdminMainController {
     public ResponseEntity<StoreCountResponseDTO> getStoreCounts(@RequestParam(name = "metric") String metric) {
         log.info("스토어 개설 요청 건수 조회 API 호출, metric={}", metric);
         StoreCountResponseDTO response = adminMainService.getStoreCounts(metric);
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * 이력서 신청 건수 조회
+     * @param metric new(신규), pending(미승인)
+     * @return ResponseEntity<ResumeCountResponseDTO>
+     */
+    @GetMapping("/resumes")
+    public ResponseEntity<StoreCountResponseDTO> getResumeCounts(@RequestParam(name = "metric") String metric) {
+        log.info("이력서 신청 건수 조회 API 호출, metric={}", metric);
+        StoreCountResponseDTO response = adminMainService.getResumeCounts(metric);
         return ResponseEntity.ok(response);
     }
 
