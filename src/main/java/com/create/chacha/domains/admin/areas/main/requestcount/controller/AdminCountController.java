@@ -29,5 +29,17 @@ public class AdminCountController {
         StoreCountResponseDTO response = adminMainService.getStoreCounts(metric);
         return ResponseEntity.ok(response);
     }
+    
+    /**
+     * 이력서 신청 건수 조회
+     * @param metric new(신규), pending(미승인)
+     * @return ResponseEntity<ResumeCountResponseDTO>
+     */
+    @GetMapping("/resumes")
+    public ResponseEntity<StoreCountResponseDTO> getResumeCounts(@RequestParam(name = "metric") String metric) {
+        log.info("이력서 신청 건수 조회 API 호출, metric={}", metric);
+        StoreCountResponseDTO response = adminMainService.getResumeCounts(metric);
+        return ResponseEntity.ok(response);
+    }
 
 }
