@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 구매자 스토어 메인 - 인기상품 조회 Service 구현체
+ * 구매자 스토어 메인 - 인기/대표상품 조회 Service 구현체
  */
 @Service
 @RequiredArgsConstructor
@@ -21,7 +21,13 @@ public class StoreMainProductServiceImpl implements StoreMainProductService {
 
     @Override
     public List<ProductResponseDTO> getBestProductsByStore(String storeUrl) {
-        log.info("스토어 인기상품 조회 Service 실행, storeId={}", storeUrl);
+        log.info("스토어 인기상품 조회 Service 실행, storeUrl={}", storeUrl);
         return productQueryRepository.findBestProductsByStore(storeUrl);
+    }
+
+    @Override
+    public List<ProductResponseDTO> getFlagshipProductsByStore(String storeUrl) {
+        log.info("스토어 대표상품 조회 Service 실행, storeUrl={}", storeUrl);
+        return productQueryRepository.findFlagshipProductsByStore(storeUrl);
     }
 }
