@@ -1,5 +1,6 @@
 package com.create.chacha.domains.buyer.areas.store.mainproduct.service;
 
+import com.create.chacha.domains.buyer.areas.store.mainproduct.dto.request.ProductFilterRequestDTO;
 import com.create.chacha.domains.buyer.areas.store.mainproduct.dto.response.ProductResponseDTO;
 
 import java.util.List;
@@ -28,4 +29,12 @@ public interface StoreMainProductService {
      * 전체상품 조회 (해당 스토어의 모든 상품)
      */
     List<ProductResponseDTO> getAllProductsByStore(String storeUrl);
+    
+    /**
+     * 필터링/검색 조건에 맞는 상품 리스트 반환
+     * @param storeUrl 스토어 URL
+     * @param filterDTO 필터링/검색 조건
+     * @return 상품 리스트
+     */
+    List<ProductResponseDTO> getFilteredProductsByStore(String storeUrl, ProductFilterRequestDTO filterDTO);
 }
