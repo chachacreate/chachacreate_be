@@ -5,7 +5,7 @@ package com.create.chacha.domains.shared.constants;
 public enum OrderInfoStatusEnum {
     ORDER_OK,
     SHIPPED,
-    DELEVERED,
+    DELIVERED,
     CANCEL_RQ,
     CANCEL_OK,
     REFUND_RQ,

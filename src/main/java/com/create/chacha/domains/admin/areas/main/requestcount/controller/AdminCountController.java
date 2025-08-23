@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
 @Slf4j
-public class AdminMainController {
+public class AdminCountController {
 
     private final AdminMainService adminMainService;
 
