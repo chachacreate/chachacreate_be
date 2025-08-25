@@ -38,9 +38,15 @@ public interface ClassInfoRepository extends JpaRepository<ClassInfoEntity, Long
 			  WHERE ci.isDeleted = false
 			    AND img.imageSequence = 1
 			    AND (:keyword IS NULL OR ci.title LIKE CONCAT('%', :keyword, '%'))
+			  ORDER BY
+		        CASE WHEN :sort = 'latest' THEN ci.id END DESC,
+		        CASE WHEN :sort = 'end_date' THEN ci.endDate END ASC,
+		        CASE WHEN :sort = 'price_low' THEN ci.price END ASC,
+		        CASE WHEN :sort = 'price_high' THEN ci.price END DESC   
 			  """)
 			List<ClassCardVO> findClassCards(
 			    @Param("keyword") String keyword,
+			    @Param("sort") String sort,
 			    Pageable pageable
 			);
 

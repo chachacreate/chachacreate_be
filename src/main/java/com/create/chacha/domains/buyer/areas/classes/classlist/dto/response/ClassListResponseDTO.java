@@ -2,6 +2,8 @@ package com.create.chacha.domains.buyer.areas.classes.classlist.dto.response;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+
 import com.create.chacha.domains.shared.classes.vo.ClassCardVO;
 
 import lombok.AllArgsConstructor;
@@ -62,4 +64,13 @@ public class ClassListResponseDTO {
      * - 프론트에서 '더보기/다음' 버튼을 비활성화하는 조건으로 사용
      */
     private final boolean last;
+    
+    public ClassListResponseDTO(Page<ClassCardVO> page) {
+        this.content = page.getContent();
+        this.page = page.getNumber();
+        this.size = page.getSize();
+        this.totalElements = page.getTotalElements();
+        this.totalPages = page.getTotalPages();
+        this.last = page.isLast();
+    }
 }

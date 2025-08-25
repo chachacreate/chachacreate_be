@@ -10,10 +10,12 @@ public interface ClassListService {
 
     /**
      * 전체 클래스 목록 조회
+     * 조건조회 결과 반환
      *
      * @param filter  페이지/검색 조건 (page, size, keyword 등)
      * @param sort    정렬 키 (예: "createdAt,desc")
      * @return        페이지 메타 + 목록 카드 VO 리스트
      */
-    ClassListResponseDTO getClassList(ClassListFilterDTO filter, String sort);
+    ClassListResponseDTO getClassList(ClassListFilterDTO filter);
+    
 }
