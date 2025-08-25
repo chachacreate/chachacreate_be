@@ -1,5 +1,6 @@
 package com.create.chacha.domains.buyer.areas.classes.classlist.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
@@ -9,7 +10,7 @@ import com.create.chacha.domains.shared.classes.vo.ClassCardVO;
 import com.create.chacha.domains.shared.entity.classcore.ClassInfoEntity;
 
 /**
- * 클래스 목록 조회 전용 Repository 
+ * 클래스 목록/조건조회/날짜기준 조회 Repository
  *
  * - DB에 접근하여 "목록 카드에 필요한 필드만" 조회
  * - Entity → VO 로 바로 투영(프로젝션)해서, API 응답에 맞춘 최소 데이터만 꺼내온다.
@@ -21,34 +22,40 @@ import com.create.chacha.domains.shared.entity.classcore.ClassInfoEntity;
  */
 public interface ClassInfoRepository extends JpaRepository<ClassInfoEntity, Long> {
 
-	@Query("""
-			  SELECT new com.create.chacha.domains.shared.classes.vo.ClassCardVO(
-			      ci.id,
-			      ci.title,
-			      img.url,
-			      st.name,
-			      CONCAT(ci.addressRoad, ' ', ci.addressDetail,
-			             CASE WHEN ci.addressExtra IS NOT NULL AND ci.addressExtra <> '' 
-			                  THEN CONCAT(' ', ci.addressExtra) ELSE '' END),
-			      ci.price
-			  )
-			  FROM ClassInfoEntity ci
-			  JOIN StoreEntity st ON ci.store.id = st.id
-			  JOIN ClassImageEntity img ON img.classInfo.id = ci.id
-			  WHERE ci.isDeleted = false
-			    AND img.imageSequence = 1
-			    AND (:keyword IS NULL OR ci.title LIKE CONCAT('%', :keyword, '%'))
-			  ORDER BY
-		        CASE WHEN :sort = 'latest' THEN ci.id END DESC,
-		        CASE WHEN :sort = 'end_date' THEN ci.endDate END ASC,
-		        CASE WHEN :sort = 'price_low' THEN ci.price END ASC,
-		        CASE WHEN :sort = 'price_high' THEN ci.price END DESC   
-			  """)
-			List<ClassCardVO> findClassCards(
-			    @Param("keyword") String keyword,
-			    @Param("sort") String sort,
-			    Pageable pageable
-			);
+	@Query(
+			  value = """
+			      SELECT new com.create.chacha.domains.shared.classes.vo.ClassCardVO(
+			          ci.id,
+			          ci.title,
+			          img.url,
+			          st.name,
+			          CONCAT(ci.addressRoad, ' ', ci.addressDetail,
+			                 CASE WHEN ci.addressExtra IS NOT NULL AND ci.addressExtra <> '' 
+			                      THEN CONCAT(' ', ci.addressExtra) ELSE '' END),
+			          ci.price,
+			          (ci.participant - COUNT(r.id))
+			      )
+			      FROM ClassInfoEntity ci
+			      JOIN StoreEntity st ON ci.store.id = st.id
+			      JOIN ClassImageEntity img ON img.classInfo.id = ci.id
+			      LEFT JOIN ClassReservationEntity r ON ci.id = r.classInfo.id
+			      WHERE ci.isDeleted = false
+			        AND img.imageSequence = 1
+			        AND (:keyword IS NULL OR ci.title LIKE CONCAT('%', :keyword, '%'))
+			      GROUP BY ci.id, ci.title, img.url, st.name,
+			               ci.addressRoad, ci.addressDetail, ci.addressExtra,
+			               ci.price, ci.participant
+			      """,
+			  countQuery = """
+			      SELECT COUNT(ci.id)
+			      FROM ClassInfoEntity ci
+			      WHERE ci.isDeleted = false
+			        AND (:keyword IS NULL OR ci.title LIKE CONCAT('%', :keyword, '%'))
+			      """
+			)
+			List<ClassCardVO> findClassCards(@Param("keyword") String keyword, Pageable pageable);
+
+
 
 
     /**
@@ -61,4 +68,41 @@ public interface ClassInfoRepository extends JpaRepository<ClassInfoEntity, Long
         AND (:keyword IS NULL OR ci.title LIKE CONCAT('%', :keyword, '%'))
       """)
     long countClassCards(@Param("keyword") String keyword);
+
+
+    /**
+     * 날짜 기준 예약 가능 클래스 조회
+     * - 선택한 날짜의 클래스
+     * - 여석 = participant - 예약 수
+     * - startDate + startTime 오름차순 정렬
+     */
+    @Query("""
+    		  SELECT new com.create.chacha.domains.shared.classes.vo.ClassCardVO(
+    		      ci.id,
+    		      ci.title,
+    		      img.url,
+    		      st.name,
+    		      CONCAT(ci.addressRoad, ' ', ci.addressDetail,
+    		             CASE WHEN ci.addressExtra IS NOT NULL AND ci.addressExtra <> '' 
+    		                  THEN CONCAT(' ', ci.addressExtra) ELSE '' END),
+    		      ci.price,
+    		      (ci.participant - COUNT(r.id))
+    		  )
+    		  FROM ClassInfoEntity ci
+    		  JOIN StoreEntity st ON ci.store.id = st.id
+    		  JOIN ClassImageEntity img ON img.classInfo.id = ci.id
+    		  LEFT JOIN ClassReservationEntity r ON ci.id = r.classInfo.id
+    		  WHERE ci.isDeleted = false
+    		    AND img.imageSequence = 1
+    		    AND ci.startDate BETWEEN :start AND :end
+    		  GROUP BY ci.id, ci.title, img.url, st.name, ci.addressRoad, ci.addressDetail,
+    		           ci.addressExtra, ci.price, ci.participant, ci.startDate, ci.startTime
+    		  ORDER BY ci.startDate ASC, ci.startTime ASC
+    		  """)
+    		List<ClassCardVO> findAvailableClassesByDate(
+    		    @Param("start") LocalDateTime start,
+    		    @Param("end") LocalDateTime end
+    		);
+
+	
 }
