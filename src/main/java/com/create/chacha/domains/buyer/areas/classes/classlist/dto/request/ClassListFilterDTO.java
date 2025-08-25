@@ -1,16 +1,19 @@
 package com.create.chacha.domains.buyer.areas.classes.classlist.dto.request;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.lang.Nullable;
+
 import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
  * 클래스 목록 조회용 요청 DTO
- * - 클라이언트가 전달하는 검색/페이지네이션 조건을 담는다.
+ * - 클라이언트가 전달하는 조건조회,검색/페이지네이션 조건을 담는다.
  * - 컨트롤러에서 @ModelAttribute 로 바인딩되어 Service → Repository 로 전달됨.
- * - 현재 단계는 "전체 조회 + 키워드 검색 + 기본 페이지네이션"만 활성화.
- *   (추가 필터들은 TODO 주석만 남기고 실제 코드는 추후 확장)
+ * - 최신순, 마감임박순, 낮은 가격순, 높은 가격순, 클래스명 검색
  */
 @Getter
 @Setter
@@ -25,6 +28,9 @@ public class ClassListFilterDTO {
      */
     @Nullable
     private String keyword;   // 제목 like 검색 값
+    @Nullable
+    private String sort;		 // latest, end_date, price_low, price_high
+    
 
     /**
      * 페이지 번호 (0-base)
@@ -43,10 +49,18 @@ public class ClassListFilterDTO {
      */
     @Min(1)
     private int size = 20;    // 기본값 20, Service에서 상한 보정
+    
+    /**
+     * Pageable 변환
+     */
+    public Pageable toPageable() {
+        Sort sortOption = switch (this.sort != null ? this.sort : "latest") {
+            case "end_date" -> Sort.by(Sort.Direction.ASC, "endDate", "endTime");
+            case "price_low" -> Sort.by(Sort.Direction.ASC, "price");
+            case "price_high" -> Sort.by(Sort.Direction.DESC, "price");
+            default -> Sort.by(Sort.Direction.DESC, "id"); // 최신순
+        };
+        return PageRequest.of(page, size, sortOption);
+    }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // ▼▼▼ 추후 확장 예정 필터들(요구사항 확정 뒤에 활성화) ▼▼▼
-    // 최신순, 마감임박순, 낮은 가격순, 높은 가격순
-    // ※ 지금 단계에서는 스펙만 남겨두고 실제 필드/로직은 추가하지 않음.
-    // ─────────────────────────────────────────────────────────────────────────────
 }

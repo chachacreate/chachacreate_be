@@ -25,13 +25,20 @@ public class ClassListController {
     private final ClassListService classListService;
 
     /**
-     * 전체 클래스 목록 조회 (t1~t5만 응답: 제목, 썸네일, 스토어명, 상세위치, 가격)
+     * 전체 클래스 목록 조회
+     *  클래스 조건조회 API
+     *  최신순, 마감임박순(end_date + end_time), 낮은 가격순, 높은 가격순, 클래스명 검색
      */
     @GetMapping("/classes")
     public ClassListResponseDTO getClasses(
             @Valid @ModelAttribute ClassListFilterDTO filter,         
             @RequestParam(name = "sort", required = false) String sort 
     ) {
-        return classListService.getClassList(filter, sort);
+    		if(filter.getSort() != null || (filter.getKeyword() != null && !filter.getKeyword().isBlank())) {
+    			log.info("클래스 조건조회 API 호출 - sort={}, keyword={}, page={}, size={}", filter.getSort(), filter.getKeyword(), filter.getPage(), filter.getSize());
+    		} else {
+    			log.info("클래스 전체조회 API 호출 - page={}, size={}", filter.getPage(), filter.getSize());
+    		}
+        return classListService.getClassList(filter);
     }
 }
