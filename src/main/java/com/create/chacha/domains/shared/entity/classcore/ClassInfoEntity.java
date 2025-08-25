@@ -108,5 +108,5 @@ public class ClassInfoEntity extends BaseEntity {
     /**
      * 클래스 시간 간격 (분 단위)
      */
-    private Integer interval;
+    private Integer timeInterval;
 }
