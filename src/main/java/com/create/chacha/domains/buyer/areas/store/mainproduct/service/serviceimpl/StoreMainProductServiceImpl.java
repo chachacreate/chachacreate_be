@@ -4,11 +4,14 @@ import com.create.chacha.domains.buyer.areas.store.mainproduct.dto.request.Produ
 import com.create.chacha.domains.buyer.areas.store.mainproduct.dto.response.ProductResponseDTO;
 import com.create.chacha.domains.buyer.areas.store.mainproduct.repository.ProductQueryRepository;
 import com.create.chacha.domains.buyer.areas.store.mainproduct.service.StoreMainProductService;
+import com.create.chacha.domains.shared.product.vo.ProductVO;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 구매자 스토어 메인 - 상품 조회 Service 구현체
@@ -51,6 +54,11 @@ public class StoreMainProductServiceImpl implements StoreMainProductService {
     @Override
     public List<ProductResponseDTO> getFilteredProductsByStore(String storeUrl, ProductFilterRequestDTO filterDTO) {
         log.info("스토어 전체상품 조회 Service 실행, storeUrl={}, filter={}", storeUrl, filterDTO);
-        return productQueryRepository.findProductsByFilter(storeUrl, filterDTO);
+        
+        // Repository에서 ProductVO 리스트 조회 후 DTO로 감싸서 반환
+        List<ProductVO> productList = productQueryRepository.findProductsByFilter(storeUrl, filterDTO);
+        return productList.stream()
+                .map(ProductResponseDTO::new) // ProductVO → ProductResponseDTO
+                .collect(Collectors.toList());
     }
 }
