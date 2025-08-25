@@ -1,7 +1,11 @@
 package com.create.chacha.domains.buyer.areas.classes.classlist.service;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import com.create.chacha.domains.buyer.areas.classes.classlist.dto.request.ClassListFilterDTO;
 import com.create.chacha.domains.buyer.areas.classes.classlist.dto.response.ClassListResponseDTO;
+import com.create.chacha.domains.shared.classes.vo.ClassCardVO;
 
 /**
  * 클래스 목록 조회 유스케이스 정의 (비즈니스 경계)
@@ -17,5 +21,10 @@ public interface ClassListService {
      * @return        페이지 메타 + 목록 카드 VO 리스트
      */
     ClassListResponseDTO getClassList(ClassListFilterDTO filter);
+
+    /**
+     * 날짜 기준 예약 가능 클래스 조회
+     */
+	List<ClassCardVO> getAvailableClassesByDate(LocalDate date);
     
 }

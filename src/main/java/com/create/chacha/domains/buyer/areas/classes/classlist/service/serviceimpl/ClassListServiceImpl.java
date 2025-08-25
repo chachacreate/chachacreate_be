@@ -1,5 +1,7 @@
 package com.create.chacha.domains.buyer.areas.classes.classlist.service.serviceimpl;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
@@ -33,32 +35,31 @@ public class ClassListServiceImpl implements ClassListService {
 
     @Override
     public ClassListResponseDTO getClassList(ClassListFilterDTO f) {
+    	
         // 1) 페이지 파라미터 보정
         int size = Math.min(Math.max(f.getSize(), 1), 100);
         int page = Math.max(f.getPage(), 0);
 
-        // 2) 정렬 조건 파싱
-        Sort springSort = parseSort(f.getSort());
+        // 2) 정렬 파싱 → Pageable 생성
+        Sort sort = parseSort(f.getSort());
+        Pageable pageable = PageRequest.of(page, size, sort);
 
-        // 3) Pageable 구성
-        Pageable pageable = PageRequest.of(page, size, springSort);
-
-        // 4) 검색어 정규화
+        // 3) 검색어 정규화
         String keyword = normalize(f.getKeyword());
 
-        // 5) Repository 호출
-        List<ClassCardVO> rows = classInfoRepository.findClassCards(keyword, f.getSort(), pageable);
+        // 4) Repository 호출
+        List<ClassCardVO> rows = classInfoRepository.findClassCards(keyword, pageable);
         long total = classInfoRepository.countClassCards(keyword);
 
-        // 6) 페이지 메타 계산
+        // 5) 페이지 메타 계산
         int totalPages = (int) Math.ceil((double) total / size);
         boolean last = (page + 1) >= Math.max(totalPages, 1);
 
-        // 7) 로그
+        // 6) 로그
         log.info("클래스 조건조회 실행 - sort={}, keyword={}, page={}, size={}, total={}",
                 f.getSort(), keyword, page, size, total);
 
-        // 8) 응답 DTO 조립
+        // 7) 응답 조립
         return ClassListResponseDTO.builder()
                 .content(rows)
                 .page(page)
@@ -98,4 +99,12 @@ public class ClassListServiceImpl implements ClassListService {
         String t = s.trim();
         return t.isEmpty() ? null : t;
     }
+
+    @Override
+    public List<ClassCardVO> getAvailableClassesByDate(LocalDate date) {
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = date.plusDays(1).atStartOfDay();
+        return classInfoRepository.findAvailableClassesByDate(start, end);
+    }
+
 }
