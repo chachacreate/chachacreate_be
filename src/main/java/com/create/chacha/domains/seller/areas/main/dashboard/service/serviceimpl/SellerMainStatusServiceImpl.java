@@ -18,10 +18,10 @@ public class SellerMainStatusServiceImpl implements SellerMainStatusService {
     @Override
     public OrderStatusCountResponseDTO getOrderStatusCounts(String storeUrl) {
         return OrderStatusCountResponseDTO.builder()
-                .newOrders(orderInfoRepository.countByStatus(OrderInfoStatusEnum.ORDER_OK))
-                .delivered(orderInfoRepository.countByStatus(OrderInfoStatusEnum.DELIVERED))
-                .cancelRequests(orderInfoRepository.countByStatus(OrderInfoStatusEnum.CANCEL_RQ))
-                .refunds(orderInfoRepository.countByStatus(OrderInfoStatusEnum.REFUND_OK))
+                .newOrders(orderInfoRepository.countByStoreUrlAndStatus(storeUrl, OrderInfoStatusEnum.ORDER_OK))
+                .delivered(orderInfoRepository.countByStoreUrlAndStatus(storeUrl, OrderInfoStatusEnum.DELIVERED))
+                .cancelRequests(orderInfoRepository.countByStoreUrlAndStatus(storeUrl, OrderInfoStatusEnum.CANCEL_RQ))
+                .refunds(orderInfoRepository.countByStoreUrlAndStatus(storeUrl, OrderInfoStatusEnum.REFUND_OK))
                 .build();
     }
 }
