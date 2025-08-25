@@ -1,0 +1,163 @@
+package com.create.chacha.domains.seller.areas.classes.classinsert.service;
+
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.create.chacha.domains.seller.areas.classes.classinsert.dto.request.ClassCreateRequestDTO;
+import com.create.chacha.domains.seller.areas.classes.classinsert.repository.ClassImageRepository;
+import com.create.chacha.domains.seller.areas.classes.classinsert.repository.SellerClassesRepository;
+import com.create.chacha.domains.seller.areas.classes.classinsert.repository.StoreRepository;
+import com.create.chacha.domains.seller.areas.classes.classinsert.service.serviceimpl.SellerClassServiceImpl;
+import com.create.chacha.domains.shared.constants.ImageStatusEnum;
+import com.create.chacha.domains.shared.entity.classcore.ClassImageEntity;
+import com.create.chacha.domains.shared.entity.classcore.ClassInfoEntity;
+import com.create.chacha.domains.shared.entity.store.StoreEntity;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class SellerClassService implements SellerClassServiceImpl {
+
+    private final SellerClassesRepository classRepo;
+    private final ClassImageRepository imageRepo;
+    private final StoreRepository storeRepo;
+
+    private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+    @Override
+    @Transactional
+    public List<Long> createClasses(String storeUrl, List<ClassCreateRequestDTO> requests) {
+        // Store 찾기 (URL 기준)
+        StoreEntity store = storeRepo.findByUrl(storeUrl)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 스토어: " + storeUrl));
+
+        List<Long> createdIds = new ArrayList<>();
+
+        for (ClassCreateRequestDTO req : requests) {
+            var c = req.getClazz();
+
+            // 클래스 기본 정보 생성
+            ClassInfoEntity classInfo = ClassInfoEntity.builder()
+                    .store(store)
+                    .title(nvl(c.getTitle()))
+                    .detail(nvl(c.getDetail()))
+                    .price(c.getPrice())
+                    .guideline(nvl(c.getGuideline()))
+                    .participant(c.getParticipant())
+                    .postNum(nvl(c.getPostNum()))
+                    .addressRoad(nvl(c.getAddressRoad()))
+                    .addressDetail(nvl(c.getAddressDetail()))
+                    .addressExtra(nvl(c.getAddressExtra()))
+                    .startDate(parseDateTime(c.getStartDate()))
+                    .endDate(parseDateTime(c.getEndDate()))
+                    .startTime(parseTime(c.getStartTime()))
+                    .endTime(parseTime(c.getEndTime()))
+                    .timeInterval(c.getTimeInterval())
+                    .build();
+
+            if (classInfo.getIsDeleted() == null) {
+                classInfo.setIsDeleted(Boolean.FALSE);
+            }
+
+            ClassInfoEntity saved = classRepo.save(classInfo);
+
+            // ===== 이미지 저장 (자동 시퀀스) =====
+            if (req.getImages() != null && !req.getImages().isEmpty()) {
+                // 상태별로 분리
+                List<ClassCreateRequestDTO.ClassImagePayload> thumbs = new ArrayList<>();
+                List<ClassCreateRequestDTO.ClassImagePayload> descs  = new ArrayList<>();
+
+                for (var img : req.getImages()) {
+                    if (img.getStatus() == null) {
+                        throw new IllegalArgumentException("이미지 status는 필수입니다. (THUMBNAIL 또는 DESCRIPTION)");
+                    }
+                    if (isBlank(img.getUrl())) {
+                        throw new IllegalArgumentException("이미지 URL은 필수입니다.");
+                    }
+                    if (img.getStatus() == ImageStatusEnum.THUMBNAIL) {
+                        thumbs.add(img);
+                    } else if (img.getStatus() == ImageStatusEnum.DESCRIPTION) {
+                        descs.add(img);
+                    } else {
+                        throw new IllegalArgumentException("알 수 없는 이미지 상태: " + img.getStatus());
+                    }
+                }
+
+                // 클라가 보낸 imageSequence가 있으면 그 순서대로 정렬, 없으면 입력 순서 유지
+                Comparator<ClassCreateRequestDTO.ClassImagePayload> byClientSeq =
+                        Comparator.comparing(ClassCreateRequestDTO.ClassImagePayload::getImageSequence,
+                                Comparator.nullsLast(Integer::compareTo));
+
+                boolean thumbsHasSeq = thumbs.stream().anyMatch(i -> i.getImageSequence() != null);
+                boolean descsHasSeq  = descs.stream().anyMatch(i -> i.getImageSequence() != null);
+
+                if (thumbsHasSeq) thumbs.sort(byClientSeq);
+                if (descsHasSeq)  descs.sort(byClientSeq);
+
+                // 썸네일 제한 및 자동 부여 1..3
+                if (thumbs.size() > 3) {
+                    throw new IllegalArgumentException("썸네일 이미지는 최대 3장까지만 등록할 수 있습니다.");
+                }
+
+                List<ClassImageEntity> images = new ArrayList<>();
+
+                int thumbSeq = 1;
+                for (var img : thumbs) {
+                    ClassImageEntity e = ClassImageEntity.builder()
+                            .classInfo(saved)
+                            .url(img.getUrl().trim())
+                            .status(ImageStatusEnum.THUMBNAIL)
+                            .imageSequence(thumbSeq++)   // 1,2,3 자동
+                            .build();
+                    e.setIsDeleted(Boolean.FALSE);
+                    images.add(e);
+                }
+
+                // 설명 이미지는 제한 없음, 자동 부여 1..N
+                int descSeq = 1;
+                for (var img : descs) {
+                    ClassImageEntity e = ClassImageEntity.builder()
+                            .classInfo(saved)
+                            .url(img.getUrl().trim())
+                            .status(ImageStatusEnum.DESCRIPTION)
+                            .imageSequence(descSeq++)    // 1,2,3,4,5...
+                            .build();
+                    e.setIsDeleted(Boolean.FALSE);
+                    images.add(e);
+                }
+
+                imageRepo.saveAll(images);
+            }
+
+            createdIds.add(saved.getId());
+        }
+
+        return createdIds;
+    }
+
+    // ===== 유틸 =====
+    private static String nvl(String s) { return (s == null) ? "" : s; }
+
+    private static boolean isBlank(String s) { return s == null || s.trim().isEmpty(); }
+
+    private static LocalDateTime parseDateTime(String s) {
+        if (s == null || s.isBlank()) return null;
+        return LocalDateTime.parse(s.trim(), DATETIME_FMT);
+    }
+
+    private static LocalTime parseTime(String s) {
+        if (s == null || s.isBlank()) return null;
+        return LocalTime.parse(s.trim(), TIME_FMT);
+    }
+}
