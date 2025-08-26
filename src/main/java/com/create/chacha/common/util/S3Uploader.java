@@ -92,14 +92,14 @@ public class S3Uploader {
 
     // -------------------- 내부 업로드 헬퍼 --------------------
     private void uploadToS3(InputStream inputStream, String key) throws Exception {
-        byte[] bytes = inputStream.readAllBytes(); // byte로 읽어야 이미지 깨짐 없이 가능
+        long contentLength = inputStream.available();
         s3Client.putObject(
                 PutObjectRequest.builder()
                         .bucket(bucketName)
                         .key(key)
                         .contentType("image/webp")
                         .build(),
-                RequestBody.fromBytes(bytes)
+                RequestBody.fromInputStream(inputStream, contentLength)
         );
     }
 
