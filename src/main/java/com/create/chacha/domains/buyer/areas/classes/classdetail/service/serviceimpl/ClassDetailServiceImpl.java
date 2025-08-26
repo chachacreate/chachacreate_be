@@ -1,5 +1,6 @@
 package com.create.chacha.domains.buyer.areas.classes.classdetail.service.serviceimpl;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
@@ -8,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.create.chacha.common.util.S3Uploader;
 import com.create.chacha.domains.buyer.areas.classes.classdetail.dto.response.ClassImagesResponseDTO;
+import com.create.chacha.domains.buyer.areas.classes.classdetail.dto.response.ClassScheduleResponseDTO;
 import com.create.chacha.domains.buyer.areas.classes.classdetail.dto.response.ClassSummaryResponseDTO;
 import com.create.chacha.domains.buyer.areas.classes.classdetail.service.ClassDetailService;
 import com.create.chacha.domains.buyer.areas.classes.classlist.repository.ClassInfoRepository;
@@ -15,6 +17,7 @@ import com.create.chacha.domains.seller.areas.classes.classinsert.repository.Cla
 import com.create.chacha.domains.seller.areas.classes.classinsert.repository.StoreRepository;
 import com.create.chacha.domains.shared.entity.classcore.ClassInfoEntity;
 import com.create.chacha.domains.shared.entity.store.StoreEntity;
+import com.create.chacha.domains.shared.repository.ClassScheduleRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,8 +27,9 @@ import lombok.RequiredArgsConstructor;
 public class ClassDetailServiceImpl implements ClassDetailService{
     private final ClassInfoRepository classInfoRepository;
     private final StoreRepository storeRepository;
-
     private final ClassImageRepository classImageRepository;
+    private final ClassScheduleRepository classScheduleRepository;
+    
     private final S3Uploader s3Uploader;
 
     @Override
@@ -68,6 +72,16 @@ public class ClassDetailServiceImpl implements ClassDetailService{
                 )
                 .build();
     }
+    
+    @Override
+    public List<ClassScheduleResponseDTO> getSchedule(Long classId) {
+        List<Object[]> results = classScheduleRepository.findClassSchedule(classId);
+        return results.stream()
+                .map(ClassScheduleResponseDTO::of)
+                .toList();
+    }
+ 
 
+    
 
 }
