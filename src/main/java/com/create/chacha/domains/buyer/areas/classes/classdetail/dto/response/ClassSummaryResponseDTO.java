@@ -19,4 +19,5 @@ public class ClassSummaryResponseDTO {
     // 스토어
     private Long storeId;
     private String storeName;
+    private String storeContent;
 }

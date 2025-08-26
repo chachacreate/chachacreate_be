@@ -51,6 +51,7 @@ public class ClassDetailServiceImpl implements ClassDetailService{
                 .addressExtra(ci.getAddressExtra())
                 .storeId(store.getId())
                 .storeName(store.getName())
+                .storeContent(store.getContent())
                 .build();
     }
 
