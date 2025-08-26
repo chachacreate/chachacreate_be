@@ -1,4 +1,4 @@
-package com.create.chacha.domains.seller.areas.classes.dto.request;
+package com.create.chacha.domains.seller.areas.classes.classinsert.dto.request;
 
 import java.util.List;
 

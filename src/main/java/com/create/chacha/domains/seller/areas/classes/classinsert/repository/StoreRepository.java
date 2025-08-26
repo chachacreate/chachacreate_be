@@ -1,4 +1,4 @@
-package com.create.chacha.domains.seller.areas.classes.repository;
+package com.create.chacha.domains.seller.areas.classes.classinsert.repository;
 
 import com.create.chacha.domains.shared.entity.store.StoreEntity;
 import org.springframework.data.repository.CrudRepository;
