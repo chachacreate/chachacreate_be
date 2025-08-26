@@ -6,8 +6,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.create.chacha.domains.buyer.areas.classes.classdetail.dto.response.ClassImagesResponseDTO;
 import com.create.chacha.domains.buyer.areas.classes.classdetail.dto.response.ClassSummaryResponseDTO;
-import com.create.chacha.domains.buyer.areas.classes.classdetail.service.ClassDetailQueryService;
+import com.create.chacha.domains.buyer.areas.classes.classdetail.service.ClassDetailService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ClassSummaryController {
 
-    private final ClassDetailQueryService service;
+    private final ClassDetailService service;
+
 
     @GetMapping("/{classId}")
     public ResponseEntity<ClassSummaryResponseDTO> getSummary(@PathVariable("classId") Long classId) {
@@ -27,4 +29,23 @@ public class ClassSummaryController {
         return ResponseEntity.ok(response);
     	
     }
+    
+    @GetMapping("/{classId}/images")
+    public ResponseEntity<ClassImagesResponseDTO> getImages(@PathVariable("classId") Long classId) {
+    	
+    	ClassImagesResponseDTO response = service.getImages(classId);
+        return ResponseEntity.ok(response);
+
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
