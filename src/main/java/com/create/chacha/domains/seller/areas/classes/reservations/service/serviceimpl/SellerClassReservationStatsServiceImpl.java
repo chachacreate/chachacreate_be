@@ -21,9 +21,11 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 판매자 페이지 - 월별 시간/요일별 클래스 예약 건수 통계 서비스 구현체
  *
- * - 월 미지정 → 당월·어제까지, 월 지정 → 해당 월 전체
- * - 차원: hour(0~23), weekday(1=SUN~7=SAT)
+ * - 연도는 현재 KST 연도로 고정
+ * - month 미지정 → 당월·어제까지, month 지정 → 해당 월 전체
+ * - dimension: "hour"(0~23) | "weekday"(1=SUN~7=SAT)
  * - 상태: ORDER_OK만 집계
+ * - 재사용: classInfoId=null(스토어 전체) | classInfoId=값(특정 클래스)
  */
 @Slf4j
 @Service
@@ -36,30 +38,43 @@ public class SellerClassReservationStatsServiceImpl implements SellerClassReserv
     public SellerClassReservationStatsResponseDTO getMonthlyStatsForStore(
             String storeUrl, Integer month, String dimension
     ) {
-        // 1) 필수 파라미터 검증
+        return getMonthlyStatsInternal(storeUrl, month, dimension, null);
+    }
+
+    @Override
+    public SellerClassReservationStatsResponseDTO getMonthlyStatsForClass(
+            String storeUrl, Integer month, String dimension, Integer classInfoId
+    ) {
+        if (classInfoId == null || classInfoId <= 0) {
+            throw new IllegalArgumentException("scope=class 인 경우 classId는 양수여야 합니다.");
+        }
+        return getMonthlyStatsInternal(storeUrl, month, dimension, classInfoId);
+    }
+
+    /** 공통 내부 구현: classInfoId 유무로 스토어/클래스 범위 분기 */
+    private SellerClassReservationStatsResponseDTO getMonthlyStatsInternal(
+            String storeUrl, Integer month, String dimension, Integer classInfoId
+    ) {
+        // 1) 필수값 검증
         if (storeUrl == null || storeUrl.isBlank()) {
             throw new IllegalArgumentException("storeUrl은 필수입니다.");
         }
 
-        // 2) 기준 시각: KST
+        // 2) 기준 시각/연월/차원 정규화
         final ZoneId KST = ZoneId.of("Asia/Seoul");
         final ZonedDateTime now = ZonedDateTime.now(KST);
 
-        // 3) 연도는 현재 연도로 고정, 월은 입력 없으면 현재 월
-        final int y = now.getYear();
+        final int y = now.getYear();  // 연도는 고정
         final int m = (month == null ? now.getMonthValue() : month);
         if (m < 1 || m > 12) {
             throw new IllegalArgumentException("month는 1~12 범위여야 합니다.");
         }
 
-        // 4) 차원 기본값/정규화
         final String dim = (dimension == null || dimension.isBlank())
                 ? "hour"
                 : dimension.toLowerCase(Locale.ROOT);
 
-        // 5) 기간 계산: [start, end)
-        //    - month 미지정(=당월) → 오늘 제외(어제 24:00 = 오늘 00:00 미만)
-        //    - month 지정         → 해당 월 전체(다음 달 1일 00:00 미만)
+        // 3) 기간 계산: [start, end)
         final LocalDate firstDay = LocalDate.of(y, m, 1);
         final LocalDateTime start = firstDay.atStartOfDay();
         final LocalDateTime nextMonthStart = firstDay.plusMonths(1).atStartOfDay();
@@ -67,12 +82,12 @@ public class SellerClassReservationStatsServiceImpl implements SellerClassReserv
         final LocalDateTime todayZeroKST = now.toLocalDate().atStartOfDay();
         final LocalDateTime end = monthSelected ? nextMonthStart : min(nextMonthStart, todayZeroKST);
 
-        // 6) 집계 실행 (스토어 전체: classInfoId=null)
+        // 4) 집계 실행 (classInfoId: null=스토어 전체, 값=특정 클래스)
         var rows = dim.equals("weekday")
-                ? statsRepo.countByWeekdayForStore(storeUrl, start, end, null)
-                : statsRepo.countByHourForStore(storeUrl, start, end, null);
+                ? statsRepo.countByWeekdayForStore(storeUrl, start, end, classInfoId)
+                : statsRepo.countByHourForStore(storeUrl, start, end, classInfoId);
 
-        // 7) 버킷 채우기 + 합계
+        // 5) 버킷 채우기 + 합계
         List<SellerClassReservationStatsItemDTO> items = new ArrayList<>();
         long total = 0;
 
@@ -102,10 +117,11 @@ public class SellerClassReservationStatsServiceImpl implements SellerClassReserv
             }
         }
 
-        // 8) 응답 
+        // 6) 응답 조립 (class 범위일 때 classId 포함)
         return SellerClassReservationStatsResponseDTO.builder()
                 .storeUrl(storeUrl)
-                .year(y)           // 현재 연도 고정
+                .classId(classInfoId)
+                .year(y)
                 .month(m)
                 .dimension(dim)
                 .rangeStart(start)
