@@ -5,8 +5,15 @@ import java.util.List;
 import com.create.chacha.domains.seller.areas.classes.classcrud.dto.request.ClassCreateRequestDTO;
 import com.create.chacha.domains.seller.areas.classes.classcrud.dto.response.ClassDeletionToggleResponseDTO;
 import com.create.chacha.domains.seller.areas.classes.classcrud.dto.response.ClassListItemResponseDTO;
+import com.create.chacha.domains.seller.areas.classes.classcrud.dto.response.ClassUpdateResponseDTO;
 
 public interface SellerClassServiceImpl {
+	
+	// 클래스 수정 기능
+	ClassUpdateResponseDTO updateClass(String storeUrl, Long classId, ClassCreateRequestDTO request);
+	
+	// 클래스 수정을 위한 데이터 조회
+	ClassCreateRequestDTO getClassForUpdate(String storeUrl, Long classId);
 	
 	// 클래스 논리적 삭제 update
 	 ClassDeletionToggleResponseDTO toggleClassesDeletion(String storeUrl, List<Long> classIds);
