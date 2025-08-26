@@ -5,12 +5,15 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import com.create.chacha.domains.seller.areas.classes.dto.request.ClassCreateRequestDTO;
+import com.create.chacha.domains.seller.areas.classes.dto.response.ClassDeletionToggleResponseDTO;
 import com.create.chacha.domains.seller.areas.classes.dto.response.ClassListItemResponseDTO;
 import com.create.chacha.domains.seller.areas.classes.repository.ClassImageRepository;
 import com.create.chacha.domains.seller.areas.classes.repository.SellerClassesRepository;
@@ -36,6 +39,69 @@ public class SellerClassService implements SellerClassServiceImpl {
 
     private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
+    
+    // 클래스 논리적 삭제 update
+    @Override
+    @Transactional
+    public ClassDeletionToggleResponseDTO toggleClassesDeletion(String storeUrl, List<Long> classIds) {
+        if (classIds == null || classIds.isEmpty()) {
+            return ClassDeletionToggleResponseDTO.builder()
+                    .requestedCount(0)
+                    .toggledToDeletedCount(0)
+                    .toggledToRestoredCount(0)
+                    .toggledToDeletedIds(List.of())
+                    .toggledToRestoredIds(List.of())
+                    .notFoundOrMismatchedIds(List.of())
+                    .build();
+        }
+
+        // 스토어 확인
+        StoreEntity store = storeRepo.findByUrl(storeUrl)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 스토어: " + storeUrl));
+
+        // 소속 + ID 일치 항목 조회
+        List<ClassInfoEntity> belongToStore = classRepo.findAllByIdInAndStore_Url(classIds, store.getUrl());
+
+        // 미존재/소속불일치 계산
+        Set<Long> requestedSet = new HashSet<>(classIds);
+        Set<Long> foundSet = new HashSet<>();
+        for (ClassInfoEntity c : belongToStore) foundSet.add(c.getId());
+        List<Long> notFoundOrMismatched = new ArrayList<>();
+        for (Long id : requestedSet) if (!foundSet.contains(id)) notFoundOrMismatched.add(id);
+
+        LocalDateTime now = LocalDateTime.now();
+        List<Long> toggledToDeleted = new ArrayList<>();
+        List<Long> toggledToRestored = new ArrayList<>();
+
+        // 토글: 0->1 (삭제), 1->0 (복구)
+        for (ClassInfoEntity c : belongToStore) {
+            boolean current = Boolean.TRUE.equals(c.getIsDeleted());
+            if (current) {
+                // 1 -> 0 (복구)
+                c.setIsDeleted(false);
+                c.setDeletedAt(null);
+                toggledToRestored.add(c.getId());
+            } else {
+                // 0 -> 1 (삭제)
+                c.setIsDeleted(true);
+                c.setDeletedAt(now);
+                toggledToDeleted.add(c.getId());
+            }
+        }
+
+        if (!belongToStore.isEmpty()) {
+            classRepo.saveAll(belongToStore);
+        }
+
+        return ClassDeletionToggleResponseDTO.builder()
+                .requestedCount(classIds.size())
+                .toggledToDeletedCount(toggledToDeleted.size())
+                .toggledToRestoredCount(toggledToRestored.size())
+                .toggledToDeletedIds(toggledToDeleted)
+                .toggledToRestoredIds(toggledToRestored)
+                .notFoundOrMismatchedIds(notFoundOrMismatched)
+                .build();
+    }
     
     // 클래스 리스트 조회
     @Override

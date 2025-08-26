@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.create.chacha.domains.seller.areas.classes.dto.request.ClassCreateRequestDTO;
+import com.create.chacha.domains.seller.areas.classes.dto.request.ClassDeletionToggleRequestDTO;
 import com.create.chacha.domains.seller.areas.classes.dto.response.ClassCreateResponseDTO;
+import com.create.chacha.domains.seller.areas.classes.dto.response.ClassDeletionToggleResponseDTO;
 import com.create.chacha.domains.seller.areas.classes.dto.response.ClassListItemResponseDTO;
 import com.create.chacha.domains.seller.areas.classes.service.serviceimpl.SellerClassServiceImpl;
 
@@ -25,6 +28,17 @@ import lombok.extern.slf4j.Slf4j;
 public class SellerClassesController {
 	
 	private final SellerClassServiceImpl sellerClassService;
+	
+	// 삭제/복구 다중 토글(0↔1)
+	@PatchMapping("/classes/delete")
+    public ResponseEntity<ClassDeletionToggleResponseDTO> toggleDeletion(
+            @PathVariable("storeUrl") String storeUrl,
+            @RequestBody ClassDeletionToggleRequestDTO request
+    ) {
+        ClassDeletionToggleResponseDTO result =
+                sellerClassService.toggleClassesDeletion(storeUrl, request.getClassIds());
+        return ResponseEntity.ok(result);
+    }
 	
 	// 클래스 조회
 	@GetMapping("/classes")
