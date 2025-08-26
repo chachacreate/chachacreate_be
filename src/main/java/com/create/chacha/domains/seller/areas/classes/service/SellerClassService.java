@@ -1,4 +1,4 @@
-package com.create.chacha.domains.seller.areas.classes.classinsert.service;
+package com.create.chacha.domains.seller.areas.classes.service;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -6,14 +6,16 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import com.create.chacha.domains.seller.areas.classes.classinsert.dto.request.ClassCreateRequestDTO;
-import com.create.chacha.domains.seller.areas.classes.classinsert.repository.ClassImageRepository;
-import com.create.chacha.domains.seller.areas.classes.classinsert.repository.SellerClassesRepository;
-import com.create.chacha.domains.seller.areas.classes.classinsert.repository.StoreRepository;
-import com.create.chacha.domains.seller.areas.classes.classinsert.service.serviceimpl.SellerClassServiceImpl;
+import com.create.chacha.domains.seller.areas.classes.dto.request.ClassCreateRequestDTO;
+import com.create.chacha.domains.seller.areas.classes.dto.response.ClassListItemResponseDTO;
+import com.create.chacha.domains.seller.areas.classes.repository.ClassImageRepository;
+import com.create.chacha.domains.seller.areas.classes.repository.SellerClassesRepository;
+import com.create.chacha.domains.seller.areas.classes.repository.StoreRepository;
+import com.create.chacha.domains.seller.areas.classes.service.serviceimpl.SellerClassServiceImpl;
 import com.create.chacha.domains.shared.constants.ImageStatusEnum;
 import com.create.chacha.domains.shared.entity.classcore.ClassImageEntity;
 import com.create.chacha.domains.shared.entity.classcore.ClassInfoEntity;
@@ -34,7 +36,67 @@ public class SellerClassService implements SellerClassServiceImpl {
 
     private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
+    
+    // 클래스 리스트 조회
+    @Override
+    public List<ClassListItemResponseDTO> getClassesByStoreUrl(String storeUrl) {
+        // storeUrl 소속의 모든 클래스(삭제/미삭제 포함)
+        List<ClassInfoEntity> infos = classRepo.findAllByStore_Url(storeUrl);
 
+        return infos.stream()
+                .map(this::toClassListItemResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    // DTO 매핑
+    private ClassListItemResponseDTO toClassListItemResponseDTO(ClassInfoEntity info) {
+        // 대표 썸네일 URL (THUMBNAIL & seq=1 & 이미지 미삭제)
+        String thumbnailUrl = imageRepo
+                .findFirstByClassInfo_IdAndStatusAndImageSequenceAndIsDeletedFalseOrderByIdAsc(
+                        info.getId(), ImageStatusEnum.THUMBNAIL, 1
+                )
+                .map(ClassImageEntity::getUrl)
+                .orElse(null);
+
+        // 주소 한 줄(널/빈값 제외, 스페이스 1칸)
+        String location = joinWithSpace(
+                info.getPostNum(),
+                info.getAddressRoad(),
+                info.getAddressDetail(),
+                info.getAddressExtra()
+        );
+
+        // 기간 문자열: "yyyy-MM-dd ~ yyyy-MM-dd"
+        String period = null;
+        if (info.getStartDate() != null && info.getEndDate() != null) {
+            period = info.getStartDate().toLocalDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                    + " ~ "
+                    + info.getEndDate().toLocalDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        }
+
+        return ClassListItemResponseDTO.builder()
+                .classId(info.getId())
+                .thumbnailUrl(thumbnailUrl)
+                .title(nvl(info.getTitle()))
+                .location(location)
+                .participant(info.getParticipant())
+                .price(info.getPrice())
+                .period(period)
+                .createdAt(info.getCreatedAt())
+                .updatedAt(info.getUpdatedAt())
+                .deletedAt(info.getDeletedAt())
+                .isDeleted(Boolean.TRUE.equals(info.getIsDeleted()))
+                .build();
+    }
+
+    // 유틸: 공백 1칸으로 연결
+    private String joinWithSpace(String... parts) {
+        return java.util.Arrays.stream(parts)
+                .filter(p -> p != null && !p.isBlank())
+                .collect(Collectors.joining(" "));
+    }
+    
+    // 클래스 등록
     @Override
     @Transactional
     public List<Long> createClasses(String storeUrl, List<ClassCreateRequestDTO> requests) {
