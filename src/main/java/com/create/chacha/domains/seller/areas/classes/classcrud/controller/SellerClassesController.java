@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.create.chacha.domains.seller.areas.classes.classcrud.dto.request.ClassCreateRequestDTO;
@@ -16,6 +17,7 @@ import com.create.chacha.domains.seller.areas.classes.classcrud.dto.request.Clas
 import com.create.chacha.domains.seller.areas.classes.classcrud.dto.response.ClassCreateResponseDTO;
 import com.create.chacha.domains.seller.areas.classes.classcrud.dto.response.ClassDeletionToggleResponseDTO;
 import com.create.chacha.domains.seller.areas.classes.classcrud.dto.response.ClassListItemResponseDTO;
+import com.create.chacha.domains.seller.areas.classes.classcrud.dto.response.ClassUpdateResponseDTO;
 import com.create.chacha.domains.seller.areas.classes.classcrud.service.serviceimpl.SellerClassServiceImpl;
 
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,25 @@ import lombok.extern.slf4j.Slf4j;
 public class SellerClassesController {
 	
 	private final SellerClassServiceImpl sellerClassService;
+	
+	// 클래스 수정 기능
+	@PatchMapping("/classes/update")
+    public ResponseEntity<ClassUpdateResponseDTO> updateClass(
+            @PathVariable("storeUrl") String storeUrl,
+            @RequestParam("classId") Long classId,
+            @RequestBody ClassCreateRequestDTO request
+    ) {
+        return ResponseEntity.ok(sellerClassService.updateClass(storeUrl, classId, request));
+    }
+	
+	// 클래스 수정 페이지 조회
+	@GetMapping("/classes/update")
+    public ResponseEntity<ClassCreateRequestDTO> getClassForUpdate(
+            @PathVariable("storeUrl") String storeUrl,
+            @RequestParam("classId") Long classId
+    ) {
+        return ResponseEntity.ok(sellerClassService.getClassForUpdate(storeUrl, classId));
+    }
 	
 	// 삭제/복구 다중 토글(0↔1)
 	@PatchMapping("/classes/delete")
