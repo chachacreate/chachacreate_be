@@ -11,8 +11,8 @@ import com.create.chacha.domains.buyer.areas.classes.classdetail.dto.response.Cl
 import com.create.chacha.domains.buyer.areas.classes.classdetail.dto.response.ClassSummaryResponseDTO;
 import com.create.chacha.domains.buyer.areas.classes.classdetail.service.ClassDetailService;
 import com.create.chacha.domains.buyer.areas.classes.classlist.repository.ClassInfoRepository;
-import com.create.chacha.domains.seller.areas.classes.classinsert.repository.ClassImageRepository;
-import com.create.chacha.domains.seller.areas.classes.classinsert.repository.StoreRepository;
+import com.create.chacha.domains.seller.areas.classes.classcrud.repository.ClassImageRepository;
+import com.create.chacha.domains.seller.areas.classes.classcrud.repository.StoreRepository;
 import com.create.chacha.domains.shared.entity.classcore.ClassInfoEntity;
 import com.create.chacha.domains.shared.entity.store.StoreEntity;
 
@@ -49,8 +49,6 @@ public class ClassDetailServiceImpl implements ClassDetailService{
                 .storeName(store.getName())
                 .build();
     }
-
-
 
     @Override
     public ClassImagesResponseDTO getImages(Long classId) {
