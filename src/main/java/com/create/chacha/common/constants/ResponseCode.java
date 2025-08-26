@@ -54,7 +54,7 @@ public enum ResponseCode {
     LOGOUT_FAIL(400,"로그아웃에 실패했습니다. 로그인이 되어있었는지 확인해주세요."),
     REFRESH_SUCCESS(200,"Access Token 재발급에 성공했습니다."),
     REFRESH_FAIL(401,"Access Token 재발급에 실패했습니다. Refresh Token을 확인해주세요."),
-    REGISTER_SUCCESS(200,"회원 가입에 성공했습니다."),
+    REGISTER_SUCCESS(201,"회원 가입에 성공했습니다."),
     REGISTER_FAIL(400, "회원 가입에 실패했습니다. 정보가 다 입력되었는지 확인해주세요."),
     LOGIN_SUCCESS(200,"로그인에 성공했습니다."),
     LOGIN_FAIL(401, "로그인에 실패했습니다. 회원 아이디나 비밀번호를 확인해주세요");

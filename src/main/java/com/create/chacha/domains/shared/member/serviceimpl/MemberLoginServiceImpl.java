@@ -39,7 +39,7 @@ public class MemberLoginServiceImpl implements MemberLoginService {
         redisTemplate.opsForValue().set("RT:" + email, refreshToken,
                 jwtTokenProvider.getExpiration(refreshToken), TimeUnit.MILLISECONDS);
 
-        return new TokenResponseDTO(email, accessToken, refreshToken);
+        return new TokenResponseDTO(member, accessToken, refreshToken);
     }
 
     @Override
@@ -62,7 +62,9 @@ public class MemberLoginServiceImpl implements MemberLoginService {
 
         // 새로운 AccessToken 발급
         String newAccessToken = jwtTokenProvider.createAccessToken(email);
-
-        return new TokenResponseDTO(email, newAccessToken, refreshToken); // RefreshToken은 그대로 반환
+        MemberEntity member = MemberEntity.builder()
+                .email(email)
+                .build();
+        return new TokenResponseDTO(member, newAccessToken, refreshToken); // RefreshToken은 그대로 반환
     }
 }
