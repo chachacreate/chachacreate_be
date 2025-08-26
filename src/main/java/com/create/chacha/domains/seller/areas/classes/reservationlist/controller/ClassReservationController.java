@@ -22,7 +22,7 @@ public class ClassReservationController {
 
     private final ClassReservationService reservationService;
 
-    @GetMapping("/seller/{storeUrl}/classreservation")
+    @GetMapping("/seller/{storeUrl}/classes/reservation")
     public ClassReservationMonthlyResponseDTO getReservations(
             @PathVariable("storeUrl") String storeUrl,
             @RequestParam(name = "yearMonth", required = false) String yearMonth
