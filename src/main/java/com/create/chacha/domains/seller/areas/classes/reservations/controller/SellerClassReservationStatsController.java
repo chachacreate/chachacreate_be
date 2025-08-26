@@ -29,9 +29,8 @@ import java.util.Locale;
 public class SellerClassReservationStatsController {
 
     private final SellerClassReservationStatsService statsService;
-
     @GetMapping(
-    				  value = {"/{storeUrl}/classreservations", "/{storeUrl}/classreservations/stats"},
+    				  value = {"/{storeUrl}/classes/reservation/stats"},
     				  produces = "application/json"
     				)
 
