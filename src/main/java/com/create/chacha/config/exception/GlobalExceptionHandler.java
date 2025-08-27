@@ -3,6 +3,10 @@ package com.create.chacha.config.exception;
 import com.create.chacha.common.ApiResponse;
 import com.create.chacha.common.constants.ResponseCode;
 import com.create.chacha.common.exception.DatabaseException;
+import com.create.chacha.domains.buyer.exception.PaymentFailedException;
+import com.create.chacha.domains.buyer.exception.PaymentRequestException;
+import com.create.chacha.domains.buyer.exception.ReservationException;
+import com.create.chacha.domains.buyer.exception.ReservationSaveException;
 import com.create.chacha.domains.shared.member.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -42,6 +46,33 @@ public class GlobalExceptionHandler {
         log.error("데이터베이스 오류: {}", e.getMessage());
         return new ApiResponse<>(ResponseCode.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
     }
+
+    // 결제/예약 관련 예외 처리
+    @ExceptionHandler(PaymentFailedException.class)
+    public ApiResponse<String> handlePaymentFailed(PaymentFailedException e) {
+        log.warn("결제 실패: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.PAYMENT_FAIL, e.getMessage());
+    }
+
+    @ExceptionHandler(PaymentRequestException.class)
+    public ApiResponse<String> handlePaymentRequestError(PaymentRequestException e) {
+        log.error("결제 요청 중 오류 발생", e);
+        return new ApiResponse<>(ResponseCode.PAYMENT_FAIL, e.getMessage());
+    }
+
+    @ExceptionHandler(ReservationException.class)
+    public ApiResponse<String> handleReservationError(ReservationException e) {
+        log.error("예약 처리 중 오류 발생", e);
+        return new ApiResponse<>(ResponseCode.RESERVATION_FAIL, e.getMessage());
+    }
+
+    @ExceptionHandler(ReservationSaveException.class)
+    public ApiResponse<String> handleReservationSaveError(ReservationSaveException e) {
+        log.error("예약 저장 중 오류 발생", e);
+        return new ApiResponse<>(ResponseCode.RESERVATION_SAVE_FAIL, e.getMessage());
+    }
+
+
 
     // 일반적인 예외 처리 (catch-all)
     @ExceptionHandler(Exception.class)
