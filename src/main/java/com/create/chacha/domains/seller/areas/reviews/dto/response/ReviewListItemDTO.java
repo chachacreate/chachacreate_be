@@ -1,4 +1,4 @@
-package com.create.chacha.domains.seller.areas.review.dto.response;
+package com.create.chacha.domains.seller.areas.reviews.dto.response;
 
 import java.time.LocalDateTime;
 import lombok.*;

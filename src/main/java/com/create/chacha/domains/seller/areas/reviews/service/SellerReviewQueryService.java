@@ -1,4 +1,4 @@
-package com.create.chacha.domains.seller.areas.review.service;
+package com.create.chacha.domains.seller.areas.reviews.service;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -6,10 +6,10 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.create.chacha.domains.seller.areas.review.dto.response.ReviewListItemDTO;
-import com.create.chacha.domains.seller.areas.review.repository.ReviewReadRepository;
-import com.create.chacha.domains.seller.areas.review.repository.ReviewReadRepository.ReviewRow;
-import com.create.chacha.domains.seller.areas.review.service.serviceimpl.SellerReviewQueryServiceImpl;
+import com.create.chacha.domains.seller.areas.reviews.dto.response.ReviewListItemDTO;
+import com.create.chacha.domains.seller.areas.reviews.repository.ReviewReadRepository;
+import com.create.chacha.domains.seller.areas.reviews.repository.ReviewReadRepository.ReviewRow;
+import com.create.chacha.domains.seller.areas.reviews.service.serviceimpl.SellerReviewQueryServiceImpl;
 
 import lombok.RequiredArgsConstructor;
 

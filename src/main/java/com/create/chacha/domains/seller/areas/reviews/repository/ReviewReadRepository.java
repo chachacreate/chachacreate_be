@@ -1,4 +1,4 @@
-package com.create.chacha.domains.seller.areas.review.repository;
+package com.create.chacha.domains.seller.areas.reviews.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;

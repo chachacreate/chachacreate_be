@@ -1,4 +1,4 @@
-package com.create.chacha.domains.seller.areas.review.controller;
+package com.create.chacha.domains.seller.areas.reviews.controller;
 
 import java.util.List;
 
@@ -8,8 +8,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.create.chacha.domains.seller.areas.review.dto.response.ReviewListItemDTO;
-import com.create.chacha.domains.seller.areas.review.service.serviceimpl.SellerReviewQueryServiceImpl;
+import com.create.chacha.domains.seller.areas.reviews.dto.response.ReviewListItemDTO;
+import com.create.chacha.domains.seller.areas.reviews.dto.response.ReviewStatsResponseDTO;
+import com.create.chacha.domains.seller.areas.reviews.service.serviceimpl.SellerReviewQueryServiceImpl;
+import com.create.chacha.domains.seller.areas.reviews.service.serviceimpl.SellerReviewStatsServiceImpl;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,6 +21,20 @@ import lombok.RequiredArgsConstructor;
 public class SellerReviewController {
 
     private final SellerReviewQueryServiceImpl service;
+    private final SellerReviewStatsServiceImpl statsservice;
+    
+    @GetMapping("/reviews/stats")
+    public ResponseEntity<ReviewStatsResponseDTO> getStoreStats(@PathVariable("storeUrl") String storeUrl) {
+        return ResponseEntity.ok(statsservice.getStoreStats(storeUrl));
+    }
+
+    @GetMapping("/reviews/stats/{productId}")
+    public ResponseEntity<ReviewStatsResponseDTO> getProductStats(
+            @PathVariable("storeUrl") String storeUrl,
+            @PathVariable("productId") Long productId
+    ) {
+        return ResponseEntity.ok(statsservice.getProductStats(storeUrl, productId));
+    }
 
     @GetMapping("/review")
     public ResponseEntity<List<ReviewListItemDTO>> getReviews(@PathVariable("storeUrl") String storeUrl) {
