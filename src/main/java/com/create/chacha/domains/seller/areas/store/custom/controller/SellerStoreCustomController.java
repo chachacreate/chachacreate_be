@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.create.chacha.domains.seller.areas.store.custom.dto.request.StoreCustomUpdateRequestDTO;
 import com.create.chacha.domains.seller.areas.store.custom.dto.response.StoreCustomGetResponseDTO;
-import com.create.chacha.domains.seller.areas.store.custom.service.SellerStoreCustomService;
+import com.create.chacha.domains.seller.areas.store.custom.service.serviceimpl.SellerStoreCustomServiceImpl;
 
 import lombok.RequiredArgsConstructor;
 
@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/seller/{storeUrl}/store")
 public class SellerStoreCustomController {
 
-    private final SellerStoreCustomService sellerStoreCustomService;
+    private final SellerStoreCustomServiceImpl sellerStoreCustomService;
     
     // 스토어 커스텀 수정 (부분 업데이트)
     @PatchMapping("/custom")
