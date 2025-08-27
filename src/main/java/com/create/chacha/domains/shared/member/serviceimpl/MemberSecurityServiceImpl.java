@@ -110,10 +110,7 @@ public class MemberSecurityServiceImpl implements UserDetailsService, MemberSecu
             MemberEntity member = memberRepository.findByEmail(email)
                     .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
 
-            // 세션에 로그인 회원 정보 저장
-            httpSession.setAttribute("loginMember", member);
-
-            return new SecurityUser(member);
+            return new SecurityUser(member); // UserDetail 반환
 
         } catch (Exception e) {
             log.error("사용자 조회 중 오류 발생: {}", e.getMessage());

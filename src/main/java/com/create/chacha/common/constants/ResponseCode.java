@@ -44,10 +44,18 @@ public enum ResponseCode {
 
 
     //// main & buyer
-    RESERVATION_SUCCESS(201, "클래스 예약에 성공했습니다."),        // 201 Created
-    PAYMENT_FAIL(402, "결제 승인에 실패했습니다."),               // 402 Payment Required
-    RESERVATION_FAIL(400, "예약 처리 중 오류가 발생했습니다. 로그인 혹은 클래스 정보를 확인해 주세요."),      // 400 Bad Request
-    RESERVATION_SAVE_FAIL(500, "예약 저장 중 오류가 발생했습니다."), // 500 Internal Server Error
+    RESERVATION_SUCCESS(201, "클래스 예약에 성공했습니다."),
+    PAYMENT_FAIL(402, "결제 승인에 실패했습니다."),
+    RESERVATION_FAIL(400, "예약 처리 중 오류가 발생했습니다. 로그인 혹은 클래스 정보를 확인해 주세요."),
+    RESERVATION_SAVE_FAIL(500, "예약 저장 중 오류가 발생했습니다."),
+  
+    CLASS_SAMMARY_OK(200, "요청이 성공적으로 처리되었습니다."),
+    CLASS_IMAGES_OK(200, "요청이 성공적으로 처리되었습니다."),
+    CLASS_SCHEDULE_OK(200, "요청이 성공적으로 처리되었습니다."),
+    
+    
+    ////seller
+    SELLER_MAIN_STATUS_OK(200, "요청이 성공적으로 처리되었습니다."),
 
     //// login & message
     // message

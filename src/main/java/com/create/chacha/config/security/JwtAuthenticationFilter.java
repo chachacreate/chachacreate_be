@@ -1,6 +1,7 @@
 package com.create.chacha.config.security;
 
 import com.create.chacha.common.util.JwtTokenProvider;
+import com.create.chacha.domains.shared.member.service.MemberSecurityService;
 import com.create.chacha.domains.shared.member.serviceimpl.MemberSecurityServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,7 +19,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisTemplate<String, String> redisTemplate;
-    private final MemberSecurityServiceImpl memberSecurityService;
+    private final MemberSecurityService memberSecurityService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -29,11 +30,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String isLogout = redisTemplate.opsForValue().get("BL:" + token);
             if (isLogout == null) {
                 String email = jwtTokenProvider.getEmail(token);
-                var userDetails = memberSecurityService.loadUserByUsername(email);
+                var userDetails = memberSecurityService.loadUserByUsername(email); // SecurityService에서 조회
                 var auth = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities()
                 );
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                SecurityContextHolder.getContext().setAuthentication(auth); // SecurityContext에 등록
             }
         }
 
