@@ -49,6 +49,10 @@ public enum ResponseCode {
     CLASS_SCHEDULE_OK(200, "요청이 성공적으로 처리되었습니다."),
     
     
+    ////seller
+    SELLER_MAIN_STATUS_OK(200, "요청이 성공적으로 처리되었습니다."),
+    
+    
 
     //// login & message
     // message
