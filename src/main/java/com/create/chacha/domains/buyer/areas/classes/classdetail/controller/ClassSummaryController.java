@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.create.chacha.common.ApiResponse;
+import com.create.chacha.common.constants.ResponseCode;
 import com.create.chacha.domains.buyer.areas.classes.classdetail.dto.response.ClassImagesResponseDTO;
 import com.create.chacha.domains.buyer.areas.classes.classdetail.dto.response.ClassScheduleResponseDTO;
 import com.create.chacha.domains.buyer.areas.classes.classdetail.dto.response.ClassSummaryResponseDTO;
@@ -26,10 +28,10 @@ public class ClassSummaryController {
 
 
     @GetMapping("/{classId}")
-    public ResponseEntity<ClassSummaryResponseDTO> getSummary(@PathVariable("classId") Long classId) {
+    public ApiResponse<ClassSummaryResponseDTO> getSummary(@PathVariable("classId") Long classId) {
     	
     	ClassSummaryResponseDTO response = service.getSummary(classId);
-        return ResponseEntity.ok(response);
+    	return new ApiResponse<>(ResponseCode.CLASS_SAMMARY_OK, response);
     	
     }
     
