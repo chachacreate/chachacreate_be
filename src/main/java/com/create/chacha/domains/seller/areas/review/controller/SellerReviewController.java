@@ -24,4 +24,12 @@ public class SellerReviewController {
     public ResponseEntity<List<ReviewListItemDTO>> getReviews(@PathVariable("storeUrl") String storeUrl) {
         return ResponseEntity.ok(service.getReviewsByStore(storeUrl));
     }
+    
+    @GetMapping("/review/{productId}")
+    public ResponseEntity<List<ReviewListItemDTO>> getReviewsByProduct(
+            @PathVariable("storeUrl") String storeUrl,
+            @PathVariable("productId") Long productId
+    ) {
+        return ResponseEntity.ok(service.getReviewsByStoreAndProduct(storeUrl, productId));
+    }
 }
