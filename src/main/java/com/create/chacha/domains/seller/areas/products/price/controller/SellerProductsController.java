@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.create.chacha.domains.seller.areas.products.price.dto.response.ProductPriceRecommendSimpleResponseDTO;
-import com.create.chacha.domains.seller.areas.products.price.service.serviceimpl.SellerProductPriceServiceImpl;
+import com.create.chacha.domains.seller.areas.products.price.service.SellerProductPriceService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/seller/{storeUrl}/products")
 public class SellerProductsController {
 
-	private final SellerProductPriceServiceImpl sellerProductPriceService;
+	private final SellerProductPriceService sellerProductPriceService;
 
 	/**
      * 상품 가격 추천(모의) — Multipart(이미지 3개)만

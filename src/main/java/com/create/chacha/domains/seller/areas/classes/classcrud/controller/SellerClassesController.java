@@ -18,7 +18,7 @@ import com.create.chacha.domains.seller.areas.classes.classcrud.dto.response.Cla
 import com.create.chacha.domains.seller.areas.classes.classcrud.dto.response.ClassDeletionToggleResponseDTO;
 import com.create.chacha.domains.seller.areas.classes.classcrud.dto.response.ClassListItemResponseDTO;
 import com.create.chacha.domains.seller.areas.classes.classcrud.dto.response.ClassUpdateResponseDTO;
-import com.create.chacha.domains.seller.areas.classes.classcrud.service.serviceimpl.SellerClassServiceImpl;
+import com.create.chacha.domains.seller.areas.classes.classcrud.service.SellerClassService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class SellerClassesController {
 	
-	private final SellerClassServiceImpl sellerClassService;
+	private final SellerClassService sellerClassService;
 	
 	// 클래스 수정 기능
 	@PatchMapping("/classes/update")
