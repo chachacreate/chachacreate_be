@@ -1,8 +1,8 @@
-package com.create.chacha.domains.seller.areas.review.service.serviceimpl;
+package com.create.chacha.domains.seller.areas.reviews.service.serviceimpl;
 
 import java.util.List;
 
-import com.create.chacha.domains.seller.areas.review.dto.response.ReviewListItemDTO;
+import com.create.chacha.domains.seller.areas.reviews.dto.response.ReviewListItemDTO;
 
 public interface SellerReviewQueryServiceImpl {
 	List<ReviewListItemDTO> getReviewsByStore(String storeUrl);
