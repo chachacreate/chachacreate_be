@@ -3,11 +3,10 @@ package com.create.chacha.domains.seller.areas.reviews.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import com.create.chacha.common.ApiResponse;
+import com.create.chacha.common.constants.ResponseCode;
 import com.create.chacha.domains.seller.areas.reviews.dto.response.ReviewListItemDTO;
 import com.create.chacha.domains.seller.areas.reviews.dto.response.ReviewStatsResponseDTO;
 import com.create.chacha.domains.seller.areas.reviews.service.serviceimpl.SellerReviewQueryServiceImpl;
@@ -22,30 +21,38 @@ public class SellerReviewController {
 
     private final SellerReviewQueryServiceImpl service;
     private final SellerReviewStatsServiceImpl statsservice;
-    
+
     @GetMapping("/reviews/stats")
-    public ResponseEntity<ReviewStatsResponseDTO> getStoreStats(@PathVariable("storeUrl") String storeUrl) {
-        return ResponseEntity.ok(statsservice.getStoreStats(storeUrl));
+    public ResponseEntity<ApiResponse<ReviewStatsResponseDTO>> getStoreStats(
+            @PathVariable("storeUrl") String storeUrl
+    ) {
+        ReviewStatsResponseDTO body = statsservice.getStoreStats(storeUrl);
+        return ResponseEntity.ok(new ApiResponse<>(ResponseCode.OK, body));
     }
 
     @GetMapping("/reviews/stats/{productId}")
-    public ResponseEntity<ReviewStatsResponseDTO> getProductStats(
+    public ResponseEntity<ApiResponse<ReviewStatsResponseDTO>> getProductStats(
             @PathVariable("storeUrl") String storeUrl,
             @PathVariable("productId") Long productId
     ) {
-        return ResponseEntity.ok(statsservice.getProductStats(storeUrl, productId));
+        ReviewStatsResponseDTO body = statsservice.getProductStats(storeUrl, productId);
+        return ResponseEntity.ok(new ApiResponse<>(ResponseCode.OK, body));
     }
 
     @GetMapping("/review")
-    public ResponseEntity<List<ReviewListItemDTO>> getReviews(@PathVariable("storeUrl") String storeUrl) {
-        return ResponseEntity.ok(service.getReviewsByStore(storeUrl));
+    public ResponseEntity<ApiResponse<List<ReviewListItemDTO>>> getReviews(
+            @PathVariable("storeUrl") String storeUrl
+    ) {
+        List<ReviewListItemDTO> body = service.getReviewsByStore(storeUrl);
+        return ResponseEntity.ok(new ApiResponse<>(ResponseCode.OK, body));
     }
-    
+
     @GetMapping("/review/{productId}")
-    public ResponseEntity<List<ReviewListItemDTO>> getReviewsByProduct(
+    public ResponseEntity<ApiResponse<List<ReviewListItemDTO>>> getReviewsByProduct(
             @PathVariable("storeUrl") String storeUrl,
             @PathVariable("productId") Long productId
     ) {
-        return ResponseEntity.ok(service.getReviewsByStoreAndProduct(storeUrl, productId));
+        List<ReviewListItemDTO> body = service.getReviewsByStoreAndProduct(storeUrl, productId);
+        return ResponseEntity.ok(new ApiResponse<>(ResponseCode.OK, body));
     }
 }
