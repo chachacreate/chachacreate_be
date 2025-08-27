@@ -6,4 +6,5 @@ import com.create.chacha.domains.seller.areas.review.dto.response.ReviewListItem
 
 public interface SellerReviewQueryServiceImpl {
 	List<ReviewListItemDTO> getReviewsByStore(String storeUrl);
+	List<ReviewListItemDTO> getReviewsByStoreAndProduct(String storeUrl, Long productId);
 }

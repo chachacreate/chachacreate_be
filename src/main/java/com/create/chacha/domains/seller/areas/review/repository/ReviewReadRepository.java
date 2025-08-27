@@ -27,7 +27,42 @@ public interface ReviewReadRepository extends JpaRepository<ReviewEntity, Long> 
         Integer getLikeCount();
         String getProductRating(); // "X.X/5.0"
     }
-
+    
+    // 특정 상품 리뷰 조회
+    @Query(value =
+            "SELECT " +
+            "  r.id AS reviewId, " +
+            "  r.created_at AS reviewCreatedAt, " +
+            "  r.updated_at AS reviewUpdatedAt, " +
+            "  m.id AS authorId, " +
+            "  m.name AS authorName, " +
+            "  r.content AS content, " +
+            "  p.name AS productName, " +
+            "  p.created_at AS productCreatedAt, " +
+            "  (SELECT pi.url FROM product_image pi " +
+            "    WHERE pi.product_id = p.id " +
+            "      AND pi.status = 1 " +
+            "      AND pi.image_sequence = 1 " +
+            "      AND pi.is_deleted = 0 " +
+            "    LIMIT 1) AS productThumbnailUrl, " +
+            "  (SELECT COUNT(*) FROM review_like rl " +
+            "    WHERE rl.review_id = r.id AND rl.is_deleted = 0) AS likeCount, " +
+            "  CONCAT(FORMAT(IFNULL((SELECT ROUND(AVG(r2.rating) * 2) / 2 " +
+            "                         FROM review r2 " +
+            "                         WHERE r2.product_id = p.id AND r2.is_deleted = 0), 0), 1), '/5.0') AS productRating " +
+            "FROM review r " +
+            "JOIN product p ON p.id = r.product_id " +
+            "JOIN store   s ON s.id = p.seller_id " +
+            "JOIN `member` m ON m.id = r.member_id " +
+            "WHERE s.url = :storeUrl " +
+            "  AND p.id = :productId " +
+            "  AND r.is_deleted = 0 " +
+            "ORDER BY r.created_at DESC",
+            nativeQuery = true)
+        List<ReviewRow> findReviewsByStoreUrlAndProductId(@Param("storeUrl") String storeUrl,
+                                                          @Param("productId") Long productId);
+    
+    // 전체 리뷰 조회
     @Query(value =
     	    "SELECT " +
     	    "  r.id AS reviewId, " +
