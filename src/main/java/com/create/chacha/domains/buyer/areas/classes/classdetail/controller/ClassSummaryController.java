@@ -36,10 +36,10 @@ public class ClassSummaryController {
     }
     
     @GetMapping("/{classId}/images")
-    public ResponseEntity<ClassImagesResponseDTO> getImages(@PathVariable("classId") Long classId) {
+    public ApiResponse<ClassImagesResponseDTO> getImages(@PathVariable("classId") Long classId) {
     	
     	ClassImagesResponseDTO response = service.getImages(classId);
-        return ResponseEntity.ok(response);
+    	return new ApiResponse<>(ResponseCode.CLASS_IMAGES_OK, response);
 
     }
     
