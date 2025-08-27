@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.nio.file.Paths;
 
-// @Configuration
+//@Configuration
 public class DataSourceConfig {
 
     @Value("${oracle.wallet.driverClassName}")
