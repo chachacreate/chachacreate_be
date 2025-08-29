@@ -3,6 +3,7 @@ package com.create.chacha.domains.buyer.areas.classes.reservations.service.servi
 import com.create.chacha.config.app.toss.TossProperties;
 import com.create.chacha.domains.buyer.areas.classes.classlist.repository.ClassInfoRepository;
 import com.create.chacha.domains.buyer.areas.classes.reservations.dto.request.ClassReservationPaymentRequestDTO;
+import com.create.chacha.domains.buyer.areas.classes.reservations.dto.response.ClassReservationCompleteResponseDTO;
 import com.create.chacha.domains.buyer.areas.classes.reservations.repository.ClassReservationPaymentRepository;
 import com.create.chacha.domains.buyer.areas.classes.reservations.service.ClassReservationPaymentService;
 import com.create.chacha.domains.buyer.exception.PaymentFailedException;
@@ -32,7 +33,7 @@ public class ClassReservationPaymentServiceImpl implements ClassReservationPayme
     private final MemberRepository memberRepository;
 
     @Override
-    public String payAndSaveReservation(Long classId, Long memberId, ClassReservationPaymentRequestDTO request) {
+    public ClassReservationCompleteResponseDTO payAndSaveReservation(Long classId, Long memberId, ClassReservationPaymentRequestDTO request) {
         // 클래스와 회원 정보 조회
         ClassInfoEntity classInfo = classInfoRepository.findById(classId)
                 .orElseThrow(() -> new ReservationException("클래스 정보 없음"));
@@ -75,9 +76,16 @@ public class ClassReservationPaymentServiceImpl implements ClassReservationPayme
                     .reservedTime(request.getReservedTime())
                     .build();
 
-            reservationRepository.save(reservation);
+            ClassReservationEntity complete = reservationRepository.save(reservation);
 
-            return response.body();
+            // 결제 후 예약 완료 정보 반환
+            return ClassReservationCompleteResponseDTO.builder()
+                    .memberName(complete.getMember().getName())
+                    .classTitle(complete.getClassInfo().getTitle())
+                    .reservedTime(complete.getReservedTime())
+                    .reservationNumber(complete.getReservationNumber())
+                    .amount(request.getAmount())
+                    .build();
 
         } catch (InterruptedException | IOException e) {
             throw new PaymentRequestException("결제 요청 중 오류 발생", e);
