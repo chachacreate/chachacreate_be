@@ -1,5 +1,7 @@
 package com.create.chacha.domains.seller.areas.classes.reservationlist.controller;
 
+import com.create.chacha.common.ApiResponse;
+import com.create.chacha.common.constants.ResponseCode;
 import com.create.chacha.domains.seller.areas.classes.reservationlist.dto.response.ClassReservationMonthlyResponseDTO;
 import com.create.chacha.domains.seller.areas.classes.reservationlist.service.ClassReservationService;
 import lombok.RequiredArgsConstructor;
@@ -23,10 +25,14 @@ public class ClassReservationController {
     private final ClassReservationService reservationService;
 
     @GetMapping("/seller/{storeUrl}/classes/reservation")
-    public ClassReservationMonthlyResponseDTO getReservations(
+    public ApiResponse<ClassReservationMonthlyResponseDTO> getReservations(
             @PathVariable("storeUrl") String storeUrl,
             @RequestParam(name = "yearMonth", required = false) String yearMonth
     ) {
-        return reservationService.getReservations(storeUrl, yearMonth);
+    	ClassReservationMonthlyResponseDTO dto = reservationService.getReservations(storeUrl, yearMonth);
+    	if(dto == null) {
+    		return new ApiResponse<>(ResponseCode.CLASS_RESERVATIONS_NOT_FOUND,null);
+    	}
+        return new ApiResponse<>(ResponseCode.CLASS_RESERVATIONS_FOUND,dto);
     }
 }

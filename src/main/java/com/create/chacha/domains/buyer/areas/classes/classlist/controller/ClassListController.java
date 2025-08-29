@@ -1,5 +1,7 @@
 package com.create.chacha.domains.buyer.areas.classes.classlist.controller;
 
+import com.create.chacha.common.ApiResponse;
+import com.create.chacha.common.constants.ResponseCode;
 import com.create.chacha.domains.buyer.areas.classes.classlist.dto.request.ClassListFilterDTO;
 import com.create.chacha.domains.buyer.areas.classes.classlist.dto.response.ClassListResponseDTO;
 import com.create.chacha.domains.buyer.areas.classes.classlist.service.ClassListService;
@@ -30,28 +32,33 @@ public class ClassListController {
      *  최신순, 마감임박순(end_date + end_time), 낮은 가격순, 높은 가격순, 클래스명 검색
      */
     @GetMapping("/classes")
-    public ClassListResponseDTO getClasses(
-            @Valid @ModelAttribute ClassListFilterDTO filter,         
-            @RequestParam(name = "sort", required = false) String sort 
+    public ApiResponse<ClassListResponseDTO> getClasses(
+            @Valid @ModelAttribute ClassListFilterDTO filter,
+            @RequestParam(name = "sort", required = false) String sort
     ) {
-    		if(filter.getSort() != null || (filter.getKeyword() != null && !filter.getKeyword().isBlank())) {
-    			log.info("클래스 조건조회 API 호출 - sort={}, keyword={}, page={}, size={}", filter.getSort(), filter.getKeyword(), filter.getPage(), filter.getSize());
-    		} else {
-    			log.info("클래스 전체조회 API 호출 - page={}, size={}", filter.getPage(), filter.getSize());
-    		}
-        return classListService.getClassList(filter);
+        ClassListResponseDTO dto = classListService.getClassList(filter);
+
+        if (dto == null || dto.getContent() == null || dto.getContent().isEmpty()) {
+            return new ApiResponse<>(ResponseCode.CLASSES_NOT_FOUND, null);
+        }
+        return new ApiResponse<>(ResponseCode.CLASSES_FOUND, dto);
     }
+
     
     /**
      * 신규: 날짜 선택 시 예약 가능 클래스 조회 API
      * @param date 선택한 날짜 (yyyy-MM-dd)
      */
     @GetMapping("/classes/available")
-    public List<ClassCardVO> getAvailableClassesByDate(
-            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
-    ) {
-        log.info("날짜 선택 예약가능 클래스 조회 API 호출: date={}", date);
-        return classListService.getAvailableClassesByDate(date);
+    public ApiResponse<List<ClassCardVO>> getAvailableClassesByDate(
+            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+
+        List<ClassCardVO> result = classListService.getAvailableClassesByDate(date);
+
+        if (result.isEmpty()) {
+            return new ApiResponse<>(ResponseCode.CLASSES_AVAILABLE_NOT_FOUND, null);
+        }
+        return new ApiResponse<>(ResponseCode.CLASSES_AVAILABLE_FOUND, result);
     }
 
 }

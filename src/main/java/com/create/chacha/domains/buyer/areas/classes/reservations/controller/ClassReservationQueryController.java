@@ -1,5 +1,7 @@
 package com.create.chacha.domains.buyer.areas.classes.reservations.controller;
 
+import com.create.chacha.common.ApiResponse;
+import com.create.chacha.common.constants.ResponseCode;
 import com.create.chacha.domains.buyer.areas.classes.reservations.dto.response.ClassReservationSummaryResponseDTO;
 import com.create.chacha.domains.buyer.areas.classes.reservations.service.ClassReservationQueryService;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +28,14 @@ public class ClassReservationQueryController {
      * 특정 회원의 예약 전체 조회(최신순)
      */
     @GetMapping("mypage/members/{memberId}/reservations")
-    public List<ClassReservationSummaryResponseDTO> getMyClassReservations(
-            @PathVariable("memberId") Long memberId
-    ) {
-        return service.getReservationsByMember(memberId);
+    public ApiResponse<List<ClassReservationSummaryResponseDTO>> getMyClassReservations(
+            @PathVariable Long memberId) {
+
+        List<ClassReservationSummaryResponseDTO> result = service.getReservationsByMember(memberId);
+
+        if (result.isEmpty()) {
+            return new ApiResponse<>(ResponseCode.MEMBER_RESERVATIONS_NOT_FOUND, null);
+        }
+        return new ApiResponse<>(ResponseCode.MEMBER_RESERVATIONS_FOUND, result);
     }
 }

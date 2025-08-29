@@ -1,5 +1,7 @@
 package com.create.chacha.domains.seller.areas.classes.reservations.controller;
 
+import com.create.chacha.common.ApiResponse;
+import com.create.chacha.common.constants.ResponseCode;
 import com.create.chacha.domains.seller.areas.classes.reservations.dto.response.SellerClassReservationStatsResponseDTO;
 import com.create.chacha.domains.seller.areas.classes.reservations.service.SellerClassReservationStatsService;
 import lombok.RequiredArgsConstructor;
@@ -29,40 +31,47 @@ import java.util.Locale;
 public class SellerClassReservationStatsController {
 
     private final SellerClassReservationStatsService statsService;
-    @GetMapping(
-    				  value = {"/{storeUrl}/classes/reservation/stats"},
-    				  produces = "application/json"
-    				)
-
-    public SellerClassReservationStatsResponseDTO getMonthlyStats(
+    
+    @GetMapping(value = "/{storeUrl}/classes/reservation/stats", produces = "application/json")
+    public ApiResponse<SellerClassReservationStatsResponseDTO> getMonthlyStats(
             @PathVariable("storeUrl") String storeUrl,
-
-            // 통계 범위: store(기본) | class
             @RequestParam(value = "scope", required = false, defaultValue = "store") String scope,
-
-            // scope=class일 때 대상 클래스 ID (class_info.id)
             @RequestParam(value = "classId", required = false) Integer classId,
-
-            // 조회 월(1~12). null이면 당월·어제까지 / 지정 시 해당 월 전체
             @RequestParam(value = "month", required = false) Integer month,
-
-            // 신규 파라미터: time|weekday
             @RequestParam(value = "groupBy", required = false) String groupBy,
-
-            // 레거시 파라미터: hour|weekday (groupBy 없을 때만 사용)
             @RequestParam(value = "dimension", required = false, defaultValue = "hour") String dimension
     ) {
         // groupBy 우선 → 없으면 dimension 사용
-        String dim = normalizeGrouping(groupBy, dimension);
+        final String dim;
+        try {
+            dim = normalizeGrouping(groupBy, dimension);
+        } catch (IllegalArgumentException e) {
+            log.warn("잘못된 그룹 파라미터. groupBy={}, dimension={}, msg={}", groupBy, dimension, e.getMessage());
+            return new ApiResponse<>(ResponseCode.SELLER_RESERVATION_GROUPBY_INVALID, null);
+        }
 
         if ("class".equalsIgnoreCase(scope)) {
             if (classId == null) {
-                throw new IllegalArgumentException("scope=class 인 경우 classId는 필수입니다.");
+                log.warn("scope=class 인데 classId 누락");
+                return new ApiResponse<>(ResponseCode.SELLER_RESERVATION_STATS_BAD_SCOPE, null);
             }
-            return statsService.getMonthlyStatsForClass(storeUrl, month, dim, classId);
+            SellerClassReservationStatsResponseDTO result =
+                    statsService.getMonthlyStatsForClass(storeUrl, month, dim, classId);
+
+            if (result == null) {
+                return new ApiResponse<>(ResponseCode.SELLER_RESERVATION_STATS_NOT_FOUND, null);
+            }
+            return new ApiResponse<>(ResponseCode.SELLER_RESERVATION_STATS_OK, result);
         }
+
         // 기본: 스토어 전체
-        return statsService.getMonthlyStatsForStore(storeUrl, month, dim);
+        SellerClassReservationStatsResponseDTO result =
+                statsService.getMonthlyStatsForStore(storeUrl, month, dim);
+
+        if (result == null) {
+            return new ApiResponse<>(ResponseCode.SELLER_RESERVATION_STATS_NOT_FOUND, null);
+        }
+        return new ApiResponse<>(ResponseCode.SELLER_RESERVATION_STATS_OK, result);
     }
 
     /** groupBy(신규) 우선, 없으면 dimension(레거시) 사용. 결과는 "hour" | "weekday" 로 표준화 */
