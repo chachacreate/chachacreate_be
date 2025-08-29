@@ -41,21 +41,58 @@ public enum ResponseCode {
 
 
     //// admin
-
+    ADMIN_STORE_COUNT_FOUND(200, "스토어 개설 요청 건수 조회 성공"),
+	ADMIN_STORE_COUNT_NOT_FOUND(404, "스토어 개설 요청 건수를 찾을 수 없습니다."),
+	ADMIN_RESUME_COUNT_FOUND(200, "이력서 신청 건수 조회 성공"),
+	ADMIN_RESUME_COUNT_NOT_FOUND(404, "이력서 신청 건수를 찾을 수 없습니다."),
 
     //// main & buyer
     RESERVATION_SUCCESS(201, "클래스 예약에 성공했습니다."),
     PAYMENT_FAIL(402, "결제 승인에 실패했습니다."),
     RESERVATION_FAIL(400, "예약 처리 중 오류가 발생했습니다. 로그인 혹은 클래스 정보를 확인해 주세요."),
     RESERVATION_SAVE_FAIL(500, "예약 저장 중 오류가 발생했습니다."),
+    
+    PRODUCTS_FOUND(200, "스토어 전체 상품 조회 성공"),
+    PRODUCTS_NOT_FOUND(404, "스토어 상품을 찾을 수 없습니다."),
+    
+    CLASSES_FOUND(200, "전체 클래스 목록 조회 성공"),
+    CLASSES_NOT_FOUND(404, "클래스 목록을 찾을 수 없습니다."),
+    CLASSES_AVAILABLE_FOUND(200, "예약 가능 클래스 조회 성공"),
+    CLASSES_AVAILABLE_NOT_FOUND(404, "예약 가능한 클래스가 없습니다."),
+    
+    MEMBER_RESERVATIONS_FOUND(200, "회원 예약 내역 조회 성공"),
+    MEMBER_RESERVATIONS_NOT_FOUND(404, "해당 회원의 예약 내역이 없습니다."),
   
     CLASS_SAMMARY_OK(200, "요청이 성공적으로 처리되었습니다."),
     CLASS_IMAGES_OK(200, "요청이 성공적으로 처리되었습니다."),
     CLASS_SCHEDULE_OK(200, "요청이 성공적으로 처리되었습니다."),
     
+    STORE_POPULAR_PRODUCTS_FOUND(200, "스토어 인기상품 조회 성공"),
+    STORE_POPULAR_PRODUCTS_NOT_FOUND(404, "스토어 인기상품이 없습니다."),
+    
+    STORE_FLAGSHIP_PRODUCTS_FOUND(200, "스토어 대표상품 조회 성공"),
+    STORE_FLAGSHIP_PRODUCTS_NOT_FOUND(404, "스토어 대표상품이 없습니다."),
+    
+    STORE_ALL_PRODUCTS_FOUND(200, "스토어 전체상품 조회 성공"),
+    STORE_ALL_PRODUCTS_NOT_FOUND(404, "스토어 전체상품을 찾을 수 없습니다."),
+    
+    PRODUCT_TYPE_INVALID(400, "지원하지 않는 type 값입니다. [popular|flagship]만 허용됩니다."),
     
     ////seller
     SELLER_MAIN_STATUS_OK(200, "요청이 성공적으로 처리되었습니다."),
+    SELLER_SETTLEMENT_FOUND(200, "판매자 정산 내역 조회에 성공했습니다."),
+    SELLER_SETTLEMENT_NOT_FOUND(404, "판매자 정산 내역을 찾을 수 없습니다."),
+    
+    CLASS_RESERVATIONS_FOUND(200, "클래스 예약 현황 조회 성공"),
+    CLASS_RESERVATIONS_NOT_FOUND(404, "해당 클래스의 예약 내역이 없습니다."),
+    CLASS_STATS_FOUND(200, "클래스 예약 통계 조회 성공"),
+    CLASS_STATS_NOT_FOUND(404, "예약 통계를 찾을 수 없습니다."),
+    
+    SELLER_RESERVATION_STATS_OK(200, "판매자 예약 통계 조회 성공"),
+    SELLER_RESERVATION_STATS_NOT_FOUND(404, "판매자 예약 통계를 찾을 수 없습니다."),
+    
+    SELLER_RESERVATION_STATS_BAD_SCOPE(400, "scope=class 인 경우 classId가 필요합니다."),
+    SELLER_RESERVATION_GROUPBY_INVALID(400, "groupBy/dimension 값이 올바르지 않습니다."),
 
     //// login & message
     // message

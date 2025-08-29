@@ -1,11 +1,12 @@
 package com.create.chacha.domains.buyer.areas.store.mainproduct.controller;
 
+import com.create.chacha.common.ApiResponse;
+import com.create.chacha.common.constants.ResponseCode;
 import com.create.chacha.domains.buyer.areas.store.mainproduct.dto.request.ProductFilterRequestDTO;
 import com.create.chacha.domains.buyer.areas.store.mainproduct.dto.response.ProductResponseDTO;
 import com.create.chacha.domains.buyer.areas.store.mainproduct.service.StoreMainProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public class StoreMainProductController {
      * @return 상품 리스트 (최대 3개)
      */
     @GetMapping("/{storeUrl}")
-    public ResponseEntity<List<ProductResponseDTO>> getProductsByStore(
+    public ApiResponse<List<ProductResponseDTO>> getProductsByStore(
             @PathVariable("storeUrl") String storeUrl,
             @RequestParam(name = "type") String type
     ) {
@@ -41,12 +42,24 @@ public class StoreMainProductController {
 
         List<ProductResponseDTO> products;
         switch (type.toLowerCase()) {
-            case "popular" -> products = storeMainProductService.getBestProductsByStore(storeUrl);
-            case "flagship" -> products = storeMainProductService.getFlagshipProductsByStore(storeUrl);
-            default -> throw new IllegalArgumentException("지원하지 않는 type 값입니다. [popular | flagship]만 허용됩니다.");
+            case "popular" -> {
+                products = storeMainProductService.getBestProductsByStore(storeUrl);
+                if (products == null || products.isEmpty()) {
+                    return new ApiResponse<>(ResponseCode.STORE_POPULAR_PRODUCTS_NOT_FOUND, null);
+                }
+                return new ApiResponse<>(ResponseCode.STORE_POPULAR_PRODUCTS_FOUND, products);
+            }
+            case "flagship" -> {
+                products = storeMainProductService.getFlagshipProductsByStore(storeUrl);
+                if (products == null || products.isEmpty()) {
+                    return new ApiResponse<>(ResponseCode.STORE_FLAGSHIP_PRODUCTS_NOT_FOUND, null);
+                }
+                return new ApiResponse<>(ResponseCode.STORE_FLAGSHIP_PRODUCTS_FOUND, products);
+            }
+            default -> {
+                return new ApiResponse<>(ResponseCode.PRODUCT_TYPE_INVALID, null);
+            }
         }
-
-        return ResponseEntity.ok(products);
     }
 
     /**
@@ -56,16 +69,18 @@ public class StoreMainProductController {
      * @return 상품 리스트
      */
     @GetMapping("/{storeUrl}/products")
-    public ResponseEntity<List<ProductResponseDTO>> getAllProductsByStore(
+    public ApiResponse<List<ProductResponseDTO>> getAllProductsByStore(
             @PathVariable("storeUrl") String storeUrl,
             @ModelAttribute ProductFilterRequestDTO filterDTO
     ) {
         log.info("스토어 전체상품 조회 API 호출, storeUrl={}, filter={}", storeUrl, filterDTO);
 
-        // 필터링/검색 조건이 비어있으면 전체상품 조회, 있으면 조건 적용
         List<ProductResponseDTO> products = storeMainProductService.getFilteredProductsByStore(storeUrl, filterDTO);
 
-        return ResponseEntity.ok(products);
+        if (products == null || products.isEmpty()) {
+            return new ApiResponse<>(ResponseCode.STORE_ALL_PRODUCTS_NOT_FOUND, null);
+        }
+        return new ApiResponse<>(ResponseCode.STORE_ALL_PRODUCTS_FOUND, products);
     }
 
 }
