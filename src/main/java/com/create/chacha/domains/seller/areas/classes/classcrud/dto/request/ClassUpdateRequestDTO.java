@@ -4,15 +4,19 @@ import org.springframework.web.multipart.MultipartFile;
 import lombok.Data;
 
 @Data
-public class ClassCreateRequestDTO {
+public class ClassUpdateRequestDTO {
 
+    // 본문은 부분 수정이므로 통째로 or 일부만 보낼 수 있음(선택)
     private ClassCorePayload clazz;
 
-    // 썸네일은 정확히 3장
-    private MultipartFile[] thumbnails;
+    // ====== 이미지 부분 교체 전용 필드 ======
+    // 썸네일은 1~3 중 필요한 seq만 골라 교체
+    private MultipartFile[] thumbnails;   // files (선택)
+    private Integer[] thumbnailSeqs;      // thumbnails 와 1:1 매핑 (예: [1,3])
 
-    // 설명 이미지는 0..N장
-    private MultipartFile[] descriptions;
+    // 설명 이미지는 "대상 seq만 논리삭제 + 새 이미지 append(max+1)"
+    private MultipartFile[] descriptions;       // files (선택)
+    private Integer[] replaceDescriptionSeqs;   // descriptions 와 1:1 매핑 (예: [2,5,7])
 
     @Data
     public static class ClassCorePayload {
