@@ -63,7 +63,6 @@ public class SellerSettlementController {
         }
 
         Long memberId = principal.getMemberId();
-        log.info("[GET] /api/v1/sellers/settlements/me memberId={}", memberId);
 
         List<SettlementResponseDTO> result = settlementService.getSettlementsByMemberId(memberId);
 

@@ -5,6 +5,7 @@ import com.create.chacha.domains.shared.product.vo.ProductVO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 /**
@@ -15,7 +16,14 @@ import lombok.ToString;
 @Getter
 @AllArgsConstructor
 @Builder
+@NoArgsConstructor
 @ToString
 public class ProductResponseDTO {
     private ProductVO product; // 공통 상품 VO
+    
+    public static ProductResponseDTO from(ProductVO vo) {
+    		return ProductResponseDTO.builder()
+    				.product(vo)
+    				.build();
+    }
 }
