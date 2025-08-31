@@ -20,4 +20,5 @@ public interface SellerSettlementService {
      * @return 정산 응답 DTO 리스트 (최신 정산일자 순)
      */
     List<SettlementResponseDTO> getSettlementsByMemberId(Long memberId);
+    List<SettlementResponseDTO> getSettlementsByMemberAndClass(Long memberId, Long classId);
 }
