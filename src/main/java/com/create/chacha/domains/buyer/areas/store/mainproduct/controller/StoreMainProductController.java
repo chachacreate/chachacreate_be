@@ -38,7 +38,6 @@ public class StoreMainProductController {
             @PathVariable("storeUrl") String storeUrl,
             @RequestParam(name = "type") String type
     ) {
-        log.info("스토어 상품 조회 API 호출, storeUrl={}, type={}", storeUrl, type);
 
         List<ProductResponseDTO> products;
         switch (type.toLowerCase()) {

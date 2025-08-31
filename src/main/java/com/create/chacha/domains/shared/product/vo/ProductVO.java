@@ -17,7 +17,8 @@ import lombok.ToString;
 public class ProductVO {
     private Long id;              // 상품 ID
     private String name;          // 상품명
-    private String categoryName;  // 카테고리명
+    private String UpCategory;  // 상위 카테고리
+    private String DownCategory;	//하위 카테고리
     private Integer price;        // 상품 가격
     private String thumbnailUrl;  // 썸네일 이미지 URL
     private Double avgRating;     // 평균 평점 (리뷰 조인 시 사용)

@@ -29,7 +29,7 @@ public class ClassReservationQueryController {
      */
     @GetMapping("mypage/members/{memberId}/reservations")
     public ApiResponse<List<ClassReservationSummaryResponseDTO>> getMyClassReservations(
-            @PathVariable Long memberId) {
+            @PathVariable("memberId") Long memberId) {
 
         List<ClassReservationSummaryResponseDTO> result = service.getReservationsByMember(memberId);
 

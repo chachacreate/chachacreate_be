@@ -103,8 +103,13 @@ public class ClassListServiceImpl implements ClassListService {
     @Override
     public List<ClassCardVO> getAvailableClassesByDate(LocalDate date) {
         LocalDateTime start = date.atStartOfDay();
-        LocalDateTime end = date.plusDays(1).atStartOfDay();
-        return classInfoRepository.findAvailableClassesByDate(start, end);
+        LocalDateTime end   = start.plusDays(1);
+
+        // targetDate = 조회 기준일의 자정 시간
+        LocalDateTime targetDate = start;
+
+        return classInfoRepository.findAvailableClassesByDate(targetDate, start, end);
     }
+
 
 }
