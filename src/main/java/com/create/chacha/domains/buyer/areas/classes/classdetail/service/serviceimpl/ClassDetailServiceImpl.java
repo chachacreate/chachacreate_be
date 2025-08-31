@@ -34,7 +34,7 @@ public class ClassDetailServiceImpl implements ClassDetailService{
 
     @Override
     public ClassSummaryResponseDTO getSummary(Long classId) {
-        ClassInfoEntity ci = classInfoRepository.findByclassId(classId)
+        ClassInfoEntity ci = classInfoRepository.findByClassId(classId)
                 .orElseThrow(() -> new NoSuchElementException("클래스를 찾을 수 없습니다: " + classId));
 
         StoreEntity store = storeRepository.findById(ci.getStore().getId())
