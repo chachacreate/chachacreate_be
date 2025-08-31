@@ -18,7 +18,6 @@ public class ProductCreateRequestDTO {
         private Integer price;
         private String detail;    // nullable
         private Integer stock;    // >= 0
-        private Boolean isFlagship;
     }
 }
 

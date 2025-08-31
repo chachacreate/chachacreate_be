@@ -2,7 +2,10 @@ package com.create.chacha.domains.seller.areas.products.productcrud.controller;
 
 import com.create.chacha.common.ApiResponse;
 import com.create.chacha.common.constants.ResponseCode;
+import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.FlagshipUpdateRequest;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.ProductCreateRequestDTO;
+import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.FlagshipUpdateResponse;
+import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.ProductListItemDTO;
 import com.create.chacha.domains.seller.areas.products.productcrud.service.SellerProductService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,7 +28,26 @@ import java.util.List;
 public class SellerProductController {
 
     private final SellerProductService productService;
-
+    
+    // 대표 상품 설정 / 해제
+    @PostMapping(value = "/products/flagship", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<FlagshipUpdateResponse>> toggleFlagship(
+            @PathVariable("storeUrl") String storeUrl,
+            @RequestBody FlagshipUpdateRequest request
+    ) {
+        var res = productService.toggleFlagship(storeUrl, request);
+        return ResponseEntity.ok(new ApiResponse<>(ResponseCode.OK, res));
+    }
+    
+    // 상품 조회
+    @GetMapping("/products")
+    public ResponseEntity<ApiResponse<List<ProductListItemDTO>>> listByStore(
+            @PathVariable("storeUrl") String storeUrl
+    ) {
+        List<ProductListItemDTO> items = productService.getProductsByStoreUrl(storeUrl);
+        return ResponseEntity.ok(new ApiResponse<>(ResponseCode.OK, items));
+    }
+    
     /**
      * 단일/다중 등록 통합 엔드포인트
      *

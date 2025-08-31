@@ -1,7 +1,11 @@
 package com.create.chacha.domains.seller.areas.products.productcrud.service.serviceimpl;
 
 import com.create.chacha.common.util.S3Uploader;
+import com.create.chacha.domains.seller.areas.classes.classcrud.repository.StoreRepository;
+import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.FlagshipUpdateRequest;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.ProductCreateRequestDTO;
+import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.FlagshipUpdateResponse;
+import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.ProductListItemDTO;
 import com.create.chacha.domains.seller.areas.products.productcrud.repository.DownCategoryRepository;
 import com.create.chacha.domains.seller.areas.products.productcrud.repository.ProductImageRepository;
 import com.create.chacha.domains.seller.areas.products.productcrud.repository.ProductRepository;
@@ -28,7 +32,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class SellerProductServiceImpl implements SellerProductService {
-
+	
+	private final StoreRepository storeRepo;
     private final ProductRepository productRepo;
     private final ProductImageRepository imageRepo;
     private final UpCategoryRepository upRepo;
@@ -37,7 +42,93 @@ public class SellerProductServiceImpl implements SellerProductService {
 
     @PersistenceContext
     private EntityManager em;
+    
+    private Long sellerIdByStoreUrl(String storeUrl) {
+        return em.createQuery(
+                "select s.id from StoreEntity st join st.seller s where st.url = :url", Long.class)
+            .setParameter("url", storeUrl)
+            .getSingleResult();
+    }
+    
+    // 대표 상품 설정 / 해제
+    @Transactional
+    public FlagshipUpdateResponse toggleFlagship(String storeUrl, FlagshipUpdateRequest req) {
+        var ids = (req == null ? null : req.getProductIds());
+        if (ids == null || ids.isEmpty()) {
+            throw new IllegalArgumentException("productIds는 최소 1개 이상이어야 합니다.");
+        }
 
+        // storeUrl -> sellerId (엔티티 로딩 X)
+        Long sellerId = em.createQuery(
+                "select s.id from StoreEntity st join st.seller s where st.url = :url", Long.class)
+                .setParameter("url", storeUrl)
+                .getResultStream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("해당 storeUrl에 매핑된 판매자가 없습니다: " + storeUrl));
+
+        // 소유권 검증 포함 조회
+        List<ProductEntity> products = productRepo.findBySellerIdAndIdIn(sellerId, ids);
+        if (products.size() != ids.size()) {
+            throw new IllegalArgumentException("존재하지 않거나 해당 스토어 소유가 아닌 상품 id가 포함되어 있습니다.");
+        }
+
+        // 현재 스토어의 (삭제되지 않은) 대표상품 수
+        long currentActive = productRepo.countActiveFlagshipBySellerId(sellerId);
+
+        // 이번 요청에서 꺼질 수(1->0) / 켜질 수(0->1) 계산
+        long willTurnOff = products.stream()
+                .filter(p -> Boolean.TRUE.equals(p.getIsFlagship()))
+                .count();
+
+        // 켜질 대상: 지금 false이고, 삭제되지 않은 것만 허용
+        List<ProductEntity> willTurnOnList = products.stream()
+                .filter(p -> !Boolean.TRUE.equals(p.getIsFlagship()))   // 현재 false
+                .toList();
+
+        boolean hasDeletedToTurnOn = willTurnOnList.stream()
+                .anyMatch(p -> Boolean.TRUE.equals(p.getIsDeleted())); // 삭제된 상품을 켜려는가?
+
+        if (hasDeletedToTurnOn) {
+            throw new IllegalStateException("삭제된 상품은 대표상품으로 설정할 수 없습니다.");
+        }
+
+        long willTurnOn = willTurnOnList.stream()
+                .filter(p -> !Boolean.TRUE.equals(p.getIsDeleted())) // 안전하게 한 번 더
+                .count();
+
+        long after = currentActive - willTurnOff + willTurnOn;
+        if (after > 3) {
+            throw new IllegalStateException(
+                    "대표상품은 스토어당 최대 3개까지 설정 가능합니다. " +
+                    "(현재: " + currentActive + ", 켜짐 예정: " + willTurnOn + ", 꺼짐 예정: " + willTurnOff + ", 결과: " + after + ")");
+        }
+
+        // 조건 만족 → 실제 토글 적용
+        for (ProductEntity p : products) {
+            boolean now = Boolean.TRUE.equals(p.getIsFlagship());
+            // 삭제된 상품은 켜기 금지이므로, now=false && isDeleted=true 인 케이스는 여기 도달하지 않게 이미 검증됨
+            p.setIsFlagship(!now);
+        }
+
+        // flush는 @Transactional 종료 시 자동
+        return FlagshipUpdateResponse.builder()
+                .totalAfter((int) after)
+                .affectedIds(products.stream().map(ProductEntity::getId).toList())
+                .build();
+    }
+
+    
+    // 상품 조회
+    @Override
+    @Transactional
+    public List<ProductListItemDTO> getProductsByStoreUrl(String storeUrl) {
+        Long sellerId = storeRepo.findSellerIdByUrl(storeUrl)
+                .orElseThrow(() -> new IllegalArgumentException("해당 storeUrl에 매핑된 판매자가 없습니다: " + storeUrl));
+
+        return productRepo.findListBySellerIdForStore(sellerId, ImageStatusEnum.THUMBNAIL);
+    }
+    
+    // 상품 등록
     @Override
     @Transactional
     public List<Long> createProducts(String storeUrl, List<ProductCreateRequestDTO> reqs) {
@@ -91,7 +182,7 @@ public class SellerProductServiceImpl implements SellerProductService {
                 .price(p.getPrice())
                 .detail(p.getDetail())
                 .stock(p.getStock())
-                .isFlagship(Boolean.TRUE.equals(p.getIsFlagship()))
+                .isFlagship(false)
                 .build();
         entity.setIsDeleted(false);
 
