@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @Validated
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/sellers")
+@RequestMapping("/api/sellers/settlements")
 public class SellerSettlementController {
 
     private final SellerSettlementService settlementService;
@@ -53,9 +53,10 @@ public class SellerSettlementController {
      * @param principal SecurityUser (헤더 기반 인증 주입)
      * @return ResponseEntity<ApiResponse<List<SettlementResponseDTO>>>
      */
-    @GetMapping("/settlements")
+    @GetMapping("/classes")
     public ApiResponse<List<SettlementResponseDTO>> findMine(
-            @AuthenticationPrincipal SecurityUser principal) {
+            @AuthenticationPrincipal SecurityUser principal,
+            @RequestParam(name = "classId", required = false) Long classId) {
 
         if (principal == null || principal.getMemberId() == null) {
             log.warn("인증 정보가 없습니다.");
@@ -64,9 +65,12 @@ public class SellerSettlementController {
 
         Long memberId = principal.getMemberId();
 
-        List<SettlementResponseDTO> result = settlementService.getSettlementsByMemberId(memberId);
+        List<SettlementResponseDTO> result = 
+        		(classId == null)
+        		? settlementService.getSettlementsByMemberId(memberId)	//전체 클래스 정산 조회
+        		: settlementService.getSettlementsByMemberAndClass(memberId, classId);		// 특정 클래스의 정산 조회
 
-        if (result.isEmpty()) {
+        if (result == null || result.isEmpty()) {
             return new ApiResponse<>(ResponseCode.SELLER_SETTLEMENT_NOT_FOUND, null);
         }
 
