@@ -65,6 +65,6 @@ public class ResumeImageEntity{
      * 삭제 여부
      */
     @Column(nullable = false, name = "is_deleted", columnDefinition = "TINYINT")
-    private Boolean isDeleted;
+    private Boolean isDeleted = false;
 }
 
