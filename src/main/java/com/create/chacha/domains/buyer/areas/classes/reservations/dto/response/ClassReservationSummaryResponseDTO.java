@@ -18,8 +18,13 @@ import java.time.LocalDateTime;
 public class ClassReservationSummaryResponseDTO {
 
     private final String reservationNumber;
+    private final String image;
+    private final OrderAndReservationStatusEnum status;
+    private final LocalDateTime reservedTime;
     private final LocalDateTime createdAt;
     private final String classTitle;
-    private final LocalDateTime reservedTime;
-    private final OrderAndReservationStatusEnum status;
+    private final String postNum;
+    private final String addressRoad;
+    private final String addressDetail;
+    
 }

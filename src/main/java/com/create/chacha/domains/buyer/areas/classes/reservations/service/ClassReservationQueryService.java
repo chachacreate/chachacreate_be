@@ -15,5 +15,5 @@ public interface ClassReservationQueryService {
      * @param memberId 회원 ID(양수 필수)
      * @return 예약 요약 DTO 목록(정렬: createdAt DESC)
      */
-    List<ClassReservationSummaryResponseDTO> getReservationsByMember(Long memberId);
+    List<ClassReservationSummaryResponseDTO> getReservationsByMember(Long memberId, String filterRaw, String q);
 }

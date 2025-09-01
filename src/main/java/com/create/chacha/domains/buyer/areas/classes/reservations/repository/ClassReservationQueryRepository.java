@@ -5,26 +5,55 @@ import com.create.chacha.domains.shared.entity.classcore.ClassReservationEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * 예약 조회 전용 Repository
- */
+@Repository
 public interface ClassReservationQueryRepository extends JpaRepository<ClassReservationEntity, String> {
 
     @Query("""
         select new com.create.chacha.domains.buyer.areas.classes.reservations.dto.response.ClassReservationSummaryResponseDTO(
             cr.reservationNumber,
+            cimg.url,
+            cr.status,
+            cr.reservedTime,
             cr.createdAt,
             ci.title,
-            cr.reservedTime,
-            cr.status
+            ci.postNum,
+            ci.addressRoad,
+            ci.addressDetail
         )
         from ClassReservationEntity cr
         join cr.classInfo ci
+        left join com.create.chacha.domains.shared.entity.classcore.ClassImageEntity cimg
+               on cimg.classInfo = ci
+              and cimg.imageSequence = 1
+              and cimg.isDeleted = false
         where cr.member.id = :memberId
-        order by cr.createdAt desc
+          and (
+                :filter = 'ALL'
+             or (:filter = 'UPCOMING'
+                 and cr.status = com.create.chacha.domains.shared.constants.OrderAndReservationStatusEnum.ORDER_OK
+                 and cr.reservedTime >= :now)
+             or (:filter = 'PAST'
+                 and cr.status = com.create.chacha.domains.shared.constants.OrderAndReservationStatusEnum.ORDER_OK
+                 and cr.reservedTime < :now)
+             or (:filter = 'CANCELED'
+                 and cr.status = com.create.chacha.domains.shared.constants.OrderAndReservationStatusEnum.CANCEL_OK)
+          )
+          and (
+                :kw is null
+             or lower(cr.reservationNumber) like :kw
+             or lower(ci.title)            like :kw
+          )
+        order by cr.reservedTime desc, cr.createdAt desc
     """)
-    List<ClassReservationSummaryResponseDTO> findSummariesByMemberId(@Param("memberId") Long memberId);
+    List<ClassReservationSummaryResponseDTO> findSummariesByMemberAndFilterAndKeyword(
+            @Param("memberId") Long memberId,
+            @Param("now") LocalDateTime now,
+            @Param("filter") String filter,
+            @Param("kw") String keyword
+    );
 }
