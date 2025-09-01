@@ -1,15 +1,48 @@
 package com.create.chacha.domains.seller.areas.products.productcrud.repository;
 
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.create.chacha.domains.shared.entity.product.ProductEntity;
+import com.create.chacha.domains.shared.entity.product.ProductImageEntity;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.ProductListItemDTO;
 import com.create.chacha.domains.shared.constants.ImageStatusEnum;
 
 public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
+	
+	// 상품 수정
+	@Query("""
+	           select (count(p) > 0)
+	           from ProductEntity p
+	             join p.seller s
+	             join StoreEntity st on st.seller = s
+	           where p.id = :productId and st.url = :storeUrl
+	           """)
+	 boolean existsByIdAndStoreUrl(@Param("productId") Long productId,
+	                               @Param("storeUrl") String storeUrl);
+	
+	@Query("""
+	           select p
+	           from ProductEntity p
+	           where p.id = :id
+	           """)
+	Optional<ProductEntity> findForUpdate(@Param("id") Long id);
+	
+	// 상품 수정 조회
+	@Query("""
+	   select p
+	   from ProductEntity p
+	     join fetch p.downCategory dc
+	     join fetch dc.upCategory uc
+	   where p.id = :productId
+	     and p.seller.id = :sellerId
+	""")
+	Optional<ProductEntity> findForEdit(@Param("sellerId") Long sellerId,
+	                                    @Param("productId") Long productId);
 	
 	// 대표 상품 설정/해제
 	// 삭제되지 않은 대표상품 개수 (스토어 당 최대 3 제한용)
