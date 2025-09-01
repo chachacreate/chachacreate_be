@@ -1,7 +1,9 @@
 package com.create.chacha;
 
+import com.create.chacha.common.util.LegacyAPIUtil;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -29,8 +31,11 @@ class ChachacreateApplicationTests {
         }
     }
 
+    @Autowired
+    LegacyAPIUtil legacyAPIUtil;
+
     @Test
     void contextLoads() {
-        // 단순 컨텍스트 로드 테스트
+        System.out.println(legacyAPIUtil.getLegacySellerData("dojagi"));
     }
 }
