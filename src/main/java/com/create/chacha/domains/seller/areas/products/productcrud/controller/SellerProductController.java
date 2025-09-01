@@ -4,8 +4,11 @@ import com.create.chacha.common.ApiResponse;
 import com.create.chacha.common.constants.ResponseCode;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.FlagshipUpdateRequest;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.ProductCreateRequestDTO;
+import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.ProductUpdateDTO;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.FlagshipUpdateResponse;
+import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.ProductDetailDTO;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.ProductListItemDTO;
+import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.ProductUpdateResult;
 import com.create.chacha.domains.seller.areas.products.productcrud.service.SellerProductService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,6 +31,48 @@ import java.util.List;
 public class SellerProductController {
 
     private final SellerProductService productService;
+    
+    // 상품 수정
+    @PatchMapping(value = "/products/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ProductUpdateResult>> patchProductAll(
+            @PathVariable("storeUrl") String storeUrl,
+            @PathVariable("productId") Long productId,
+            @RequestPart(value = "product", required = false) String productJson,                 // 기본정보(JSON, optional)
+            @RequestPart(value = "thumbnails", required = false) List<MultipartFile> thumbnails,  // 썸네일 파일들(optional)
+            @RequestPart(value = "thumbnailSeqs", required = false) String thumbnailSeqsJson,     // 예: [1,3]
+            @RequestPart(value = "descriptions", required = false) List<MultipartFile> descriptions, // 새 설명이미지(optional)
+            @RequestPart(value = "replaceDescriptionSeqs", required = false) String replaceSeqsJson  // 예: [2,4]
+    ) throws Exception {
+
+        ObjectMapper om = new ObjectMapper();
+
+        ProductUpdateDTO dto = (productJson == null || productJson.isBlank())
+                ? null
+                : om.readValue(productJson, ProductUpdateDTO.class);
+
+        List<Integer> thumbSeqs = (thumbnailSeqsJson == null || thumbnailSeqsJson.isBlank())
+                ? null
+                : om.readValue(thumbnailSeqsJson, new com.fasterxml.jackson.core.type.TypeReference<List<Integer>>() {});
+
+        List<Integer> replaceSeqs = (replaceSeqsJson == null || replaceSeqsJson.isBlank())
+                ? null
+                : om.readValue(replaceSeqsJson, new com.fasterxml.jackson.core.type.TypeReference<List<Integer>>() {});
+
+        var result = productService.updateProductAll(
+                storeUrl, productId, dto, thumbnails, thumbSeqs, replaceSeqs, descriptions);
+
+        return ResponseEntity.ok(new ApiResponse<>(ResponseCode.OK, result));
+    }
+    
+    // 상품 수정 조회
+    @GetMapping("/products/{productId}")
+    public ResponseEntity<ApiResponse<ProductDetailDTO>> getOneForEdit(
+            @PathVariable("storeUrl") String storeUrl,
+            @PathVariable("productId") Long productId
+    ) {
+        ProductDetailDTO dto = productService.getProductForEdit(storeUrl, productId);
+        return ResponseEntity.ok(new ApiResponse<>(ResponseCode.OK, dto));
+    }
     
     // 대표 상품 설정 / 해제
     @PostMapping(value = "/products/flagship", consumes = MediaType.APPLICATION_JSON_VALUE)
