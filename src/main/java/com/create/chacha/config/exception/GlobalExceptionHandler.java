@@ -7,6 +7,7 @@ import com.create.chacha.domains.buyer.exception.PaymentFailedException;
 import com.create.chacha.domains.buyer.exception.PaymentRequestException;
 import com.create.chacha.domains.buyer.exception.ReservationException;
 import com.create.chacha.domains.buyer.exception.ReservationSaveException;
+import com.create.chacha.domains.seller.areas.resumes.exception.ResumeUploadException;
 import com.create.chacha.domains.shared.member.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -70,6 +71,14 @@ public class GlobalExceptionHandler {
     public ApiResponse<String> handleReservationSaveError(ReservationSaveException e) {
         log.error("예약 저장 중 오류 발생", e);
         return new ApiResponse<>(ResponseCode.RESERVATION_SAVE_FAIL, e.getMessage());
+    }
+
+
+    // seller
+    @ExceptionHandler(ResumeUploadException.class)
+    public ApiResponse<String> handleResumeUploadError(ResumeUploadException e) {
+        log.error("판매자 이력 인증 중 에러 발생", e);
+        return new ApiResponse<>(ResponseCode.RESUME_UPLOAD_FAIL, e.getMessage());
     }
 
 
