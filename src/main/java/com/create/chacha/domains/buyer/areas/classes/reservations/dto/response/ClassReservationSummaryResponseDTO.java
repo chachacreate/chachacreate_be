@@ -21,10 +21,8 @@ public class ClassReservationSummaryResponseDTO {
     private final String image;
     private final OrderAndReservationStatusEnum status;
     private final LocalDateTime reservedTime;
-    private final LocalDateTime createdAt;
     private final String classTitle;
-    private final String postNum;
     private final String addressRoad;
-    private final String addressDetail;
-    
+    private final String storeName;
+    private final String displayStatus;
 }
