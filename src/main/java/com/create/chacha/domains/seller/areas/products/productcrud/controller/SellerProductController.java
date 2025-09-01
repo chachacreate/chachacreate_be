@@ -2,9 +2,11 @@ package com.create.chacha.domains.seller.areas.products.productcrud.controller;
 
 import com.create.chacha.common.ApiResponse;
 import com.create.chacha.common.constants.ResponseCode;
+import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.DeleteToggleRequest;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.FlagshipUpdateRequest;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.ProductCreateRequestDTO;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.ProductUpdateDTO;
+import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.DeleteToggleResponse;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.FlagshipUpdateResponse;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.ProductDetailDTO;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.ProductListItemDTO;
@@ -31,6 +33,16 @@ import java.util.List;
 public class SellerProductController {
 
     private final SellerProductService productService;
+    
+    // 상품 삭제 토글
+    @PatchMapping(value = "/products/delete", consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_PROBLEM_JSON_VALUE })
+    public ResponseEntity<ApiResponse<DeleteToggleResponse>> toggleDelete(
+            @PathVariable("storeUrl") String storeUrl,
+            @RequestBody DeleteToggleRequest request
+    ) {
+        var res = productService.toggleDelete(storeUrl, request);
+        return ResponseEntity.ok(new ApiResponse<>(ResponseCode.OK, res));
+    }
     
     // 상품 수정
     @PatchMapping(value = "/products/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

@@ -1,8 +1,10 @@
 package com.create.chacha.domains.seller.areas.products.productcrud.service;
 
+import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.DeleteToggleRequest;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.FlagshipUpdateRequest;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.ProductCreateRequestDTO;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.ProductUpdateDTO;
+import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.DeleteToggleResponse;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.FlagshipUpdateResponse;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.ProductDetailDTO;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.ProductListItemDTO;
@@ -13,6 +15,10 @@ import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface SellerProductService {
+	
+	// 상품 삭제 토글
+	DeleteToggleResponse toggleDelete(String storeUrl, DeleteToggleRequest request);
+	
 	// 상품 수정
 	ProductUpdateResult updateProductAll(
 	        String storeUrl,

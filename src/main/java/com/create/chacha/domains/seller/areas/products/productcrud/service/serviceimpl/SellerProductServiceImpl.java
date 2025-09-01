@@ -2,9 +2,11 @@ package com.create.chacha.domains.seller.areas.products.productcrud.service.serv
 
 import com.create.chacha.common.util.S3Uploader;
 import com.create.chacha.domains.seller.areas.classes.classcrud.repository.StoreRepository;
+import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.DeleteToggleRequest;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.FlagshipUpdateRequest;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.ProductCreateRequestDTO;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.request.ProductUpdateDTO;
+import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.DeleteToggleResponse;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.FlagshipUpdateResponse;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.ProductDetailDTO;
 import com.create.chacha.domains.seller.areas.products.productcrud.dto.response.ProductListItemDTO;
@@ -28,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -52,6 +55,59 @@ public class SellerProductServiceImpl implements SellerProductService {
                 "select s.id from StoreEntity st join st.seller s where st.url = :url", Long.class)
             .setParameter("url", storeUrl)
             .getSingleResult();
+    }
+    
+    // 상품 삭제 토글
+    @Transactional
+    @Override
+    public DeleteToggleResponse toggleDelete(String storeUrl, DeleteToggleRequest req) {
+        var ids = (req == null ? null : req.getProductIds());
+        if (ids == null || ids.isEmpty()) {
+            throw new IllegalArgumentException("productIds는 최소 1개 이상이어야 합니다.");
+        }
+
+        // storeUrl -> sellerId (엔티티 로딩 X)
+        Long sellerId = em.createQuery(
+                "select s.id from StoreEntity st join st.seller s where st.url = :url", Long.class)
+            .setParameter("url", storeUrl)
+            .getResultStream()
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("해당 storeUrl에 매핑된 판매자가 없습니다: " + storeUrl));
+
+        // 소유권 검증 포함 조회
+        List<ProductEntity> products = productRepo.findBySellerIdAndIdIn(sellerId, ids);
+        if (products.size() != ids.size()) {
+            throw new IllegalArgumentException("존재하지 않거나 해당 스토어 소유가 아닌 상품 id가 포함되어 있습니다.");
+        }
+
+        int deleted = 0;
+        int restored = 0;
+        LocalDateTime now = LocalDateTime.now();
+
+        for (ProductEntity p : products) {
+            boolean isDel = Boolean.TRUE.equals(p.getIsDeleted());
+            if (isDel) {
+                // 복구
+                p.setIsDeleted(false);
+                p.setDeletedAt(null);
+                restored++;
+            } else {
+                // 삭제
+                p.setIsDeleted(true);
+                p.setDeletedAt(now);
+                // 삭제 시 대표상품은 자동 해제
+                if (Boolean.TRUE.equals(p.getIsFlagship())) {
+                    p.setIsFlagship(false);
+                }
+                deleted++;
+            }
+        }
+
+        return DeleteToggleResponse.builder()
+                .deletedCount(deleted)
+                .restoredCount(restored)
+                .affectedIds(products.stream().map(ProductEntity::getId).toList())
+                .build();
     }
     
     // 상품 수정
