@@ -76,7 +76,7 @@ public class ResumeVerificationServiceImpl implements ResumeVerificationService 
             return response;
 
         } catch (Exception e) {
-            throw new RuntimeException("이력 인증 중 오류가 발생했습니다.", e);
+            throw new ResumeUploadException("이력 인증 중 오류가 발생했습니다.", e);
         }
     }
 }

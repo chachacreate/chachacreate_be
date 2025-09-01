@@ -82,6 +82,9 @@ public enum ResponseCode {
     SELLER_MAIN_STATUS_OK(200, "요청이 성공적으로 처리되었습니다."),
     SELLER_SETTLEMENT_FOUND(200, "판매자 정산 내역 조회에 성공했습니다."),
     SELLER_SETTLEMENT_NOT_FOUND(404, "판매자 정산 내역을 찾을 수 없습니다."),
+
+    RESUME_UPLOAD_SUCCESS(201, "판매자 이력 파일 업로드가 완료되었습니다."),
+    RESUME_UPLOAD_FAIL(400, "판매자 이력 파일 업로드가 실패하였습니다"),
     
     CLASS_RESERVATIONS_FOUND(200, "클래스 예약 현황 조회 성공"),
     CLASS_RESERVATIONS_NOT_FOUND(404, "해당 클래스의 예약 내역이 없습니다."),
