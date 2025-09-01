@@ -24,5 +24,7 @@ public class ClassReservationSummaryResponseDTO {
     private final String classTitle;
     private final String addressRoad;
     private final String storeName;
+    private final Long storeId;
+    private final String storeUrl;
     private final String displayStatus;
 }
