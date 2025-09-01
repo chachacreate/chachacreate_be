@@ -22,6 +22,8 @@ public interface ClassReservationQueryRepository extends JpaRepository<ClassRese
 		        ci.title,
 		        ci.addressRoad,
 		        st.name,
+		        st.Id,
+		        st.url,
 		        case
 		            when cr.status = com.create.chacha.domains.shared.constants.OrderAndReservationStatusEnum.ORDER_OK
 		                 and cr.reservedTime >= :now
