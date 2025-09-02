@@ -48,4 +48,23 @@ public interface ClassImageRepository extends CrudRepository<ClassImageEntity, L
 	Optional<ClassImageEntity> findFirstByClassInfo_IdAndStatusAndImageSequenceAndIsDeletedFalseOrderByIdAsc(
             Long classInfoId, ImageStatusEnum status, Integer imageSequence
     );
+	
+	@Query("""
+	        select img
+	        from ClassImageEntity img
+	        where img.classInfo.id = :classId
+	          and (
+	                (img.status = :thumb and img.imageSequence = 1)
+	             or (img.status = :detail)
+	          )
+	        order by
+	          case when (img.status = :thumb and img.imageSequence = 1) then 0 else 1 end,
+	          img.imageSequence asc,
+	          img.id asc
+	    """)
+	    List<ClassImageEntity> findImagesForDetail(
+	            @Param("classId") Long classId,
+	            @Param("thumb") com.create.chacha.domains.shared.constants.ImageStatusEnum thumb,
+	            @Param("detail") com.create.chacha.domains.shared.constants.ImageStatusEnum detail
+	    );
 }
