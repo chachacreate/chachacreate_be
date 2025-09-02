@@ -9,6 +9,7 @@ public class ClassSummaryResponseDTO {
     private String title;
     private String description;
     private Integer price;
+    private String guideline;
 
     // 주소
     private String postNum;

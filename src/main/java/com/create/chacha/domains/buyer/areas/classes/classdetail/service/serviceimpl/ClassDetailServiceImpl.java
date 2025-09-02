@@ -52,6 +52,7 @@ public class ClassDetailServiceImpl implements ClassDetailService {
                 .title(ci.getTitle())
                 .description(ci.getDetail())
                 .price(ci.getPrice())
+                .guideline(ci.getGuideline())
                 .postNum(ci.getPostNum())
                 .addressRoad(ci.getAddressRoad())
                 .addressDetail(ci.getAddressDetail())
