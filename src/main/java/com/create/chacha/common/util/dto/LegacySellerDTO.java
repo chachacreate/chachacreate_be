@@ -15,12 +15,12 @@ public class LegacySellerDTO {
     /**
      * 판매자 고유 ID (기본 키)
      */
-    private Integer sellerId;
+    private Integer sellerId; // legacy(oracle)에서 seller
 
     /**
      * 회원 ID (외래키, 회원 테이블과 연관)
      */
-    private Integer memberId;
+    private Integer memberId; // boot(mysql)에서 memberId
 
     /**
      * 판매자 등록 또는 개설 날짜
