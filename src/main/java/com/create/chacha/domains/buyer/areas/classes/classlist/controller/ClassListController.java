@@ -6,11 +6,9 @@ import com.create.chacha.domains.buyer.areas.classes.classlist.dto.request.Class
 import com.create.chacha.domains.buyer.areas.classes.classlist.dto.response.ClassListResponseDTO;
 import com.create.chacha.domains.buyer.areas.classes.classlist.service.ClassListService;
 import com.create.chacha.domains.shared.classes.vo.ClassCardVO;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -19,46 +17,45 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/main") 
-@Validated
+@RequestMapping("/api/{storeUrl}/classes")
 public class ClassListController {
 
-    private final ClassListService classListService;
+    private final ClassListService service;
 
     /**
-     * 전체 클래스 목록 조회
-     *  클래스 조건조회 API
-     *  날짜기준 조회 API
-     *  최신순, 마감임박순(end_date + end_time), 낮은 가격순, 높은 가격순, 클래스명 검색
+     * 클래스 목록 조회 API
+     * - 메인홈: /api/main/classes?page=0&size=20&sort=latest&keyword=자수
+     * - 스토어: /api/{storeUrl}/classes?page=0&size=20&sort=latest&keyword=자수
      */
-    @GetMapping("/classes")
+    @GetMapping
     public ApiResponse<ClassListResponseDTO> getClasses(
-            @Valid @ModelAttribute ClassListFilterDTO filter,
-            @RequestParam(name = "sort", required = false) String sort
+            @PathVariable("storeUrl") String storeUrl,
+            @ModelAttribute ClassListFilterDTO filter
     ) {
-        ClassListResponseDTO dto = classListService.getClassList(filter);
-
-        if (dto == null || dto.getContent() == null || dto.getContent().isEmpty()) {
-            return new ApiResponse<>(ResponseCode.CLASSES_NOT_FOUND, null);
+        filter.setStoreUrl(storeUrl);
+        log.info("클래스 목록 조회 API 호출 - storeUrl={}, filter={}", storeUrl, filter);
+        ClassListResponseDTO response = service.getClassList(filter);
+        if(response == null || response.getContent().isEmpty()) {
+        	return new ApiResponse<>(ResponseCode.CLASSES_NOT_FOUND, response);
         }
-        return new ApiResponse<>(ResponseCode.CLASSES_FOUND, dto);
+        return new ApiResponse<>(ResponseCode.CLASSES_FOUND, response);
     }
 
-    
     /**
-     * 신규: 날짜 선택 시 예약 가능 클래스 조회 API
-     * @param date 선택한 날짜 (yyyy-MM-dd)
+     * 예약 가능 클래스 조회 API
+     * - 메인홈: /api/main/classes/available?date=2025-09-10
+     * - 스토어: /api/{storeUrl}/classes/available?date=2025-09-10
      */
-    @GetMapping("/classes/available")
-    public ApiResponse<List<ClassCardVO>> getAvailableClassesByDate(
-            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-
-        List<ClassCardVO> result = classListService.getAvailableClassesByDate(date);
-
-        if (result.isEmpty()) {
-            return new ApiResponse<>(ResponseCode.CLASSES_AVAILABLE_NOT_FOUND, null);
+    @GetMapping("/available")
+    public ApiResponse<List<ClassCardVO>> getAvailableClasses(
+            @PathVariable("storeUrl") String storeUrl,
+            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        log.info("예약 가능 클래스 조회 API 호출 - storeUrl={}, date={}", storeUrl, date);
+        List<ClassCardVO> available = service.getAvailableClassesByDate(storeUrl, date);
+        if(available == null || available.isEmpty()) {
+        	 	return new ApiResponse<>(ResponseCode.CLASSES_AVAILABLE_NOT_FOUND, available);
         }
-        return new ApiResponse<>(ResponseCode.CLASSES_AVAILABLE_FOUND, result);
+        return new ApiResponse<>(ResponseCode.CLASSES_AVAILABLE_FOUND, available);
     }
-
 }

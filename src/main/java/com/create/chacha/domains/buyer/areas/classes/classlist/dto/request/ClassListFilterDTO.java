@@ -30,7 +30,7 @@ public class ClassListFilterDTO {
     private String keyword;   // 제목 like 검색 값
     @Nullable
     private String sort;		 // latest, end_date, price_low, price_high
-    
+    private String storeUrl;    // 스토어 URL (main → 전체 조회)
 
     /**
      * 페이지 번호 (0-base)
