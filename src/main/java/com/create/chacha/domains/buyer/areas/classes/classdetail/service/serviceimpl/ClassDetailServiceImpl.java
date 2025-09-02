@@ -1,8 +1,10 @@
 package com.create.chacha.domains.buyer.areas.classes.classdetail.service.serviceimpl;
 
+import static com.create.chacha.domains.shared.constants.ImageStatusEnum.DESCRIPTION;
+import static com.create.chacha.domains.shared.constants.ImageStatusEnum.THUMBNAIL;
+
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -19,8 +21,7 @@ import com.create.chacha.domains.shared.entity.classcore.ClassInfoEntity;
 import com.create.chacha.domains.shared.entity.store.StoreEntity;
 import com.create.chacha.domains.shared.repository.ClassScheduleRepository;
 
-import lombok.RequiredArgsConstructor;
-
+import lombok.RequiredArgsConstructor;;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -73,25 +74,21 @@ public class ClassDetailServiceImpl implements ClassDetailService {
     public ClassImagesResponseDTO getImages(Long classId) {
         final String base = ensureTrailingSlash(cdnBaseUrl);
 
+        var rows = classImageRepository.findImagesForDetail(classId, THUMBNAIL, DESCRIPTION);
+
         return ClassImagesResponseDTO.builder()
             .classId(classId)
             .images(
-                classImageRepository.findByClassInfo_Id(classId)
-                    .stream()
+                rows.stream()
                     .map(img -> {
-                        // img.getUrl() 이 "키"든 "절대 URL"이든 안전하게 키로 정규화
                         String key = toKey(img.getUrl());
-
-                        String url = fullUrl(base, key);              // 원본 full URL
-                        String thumbnailUrl = thumbnailUrlFromKey(base, key); // 썸네일 full URL
-
                         return ClassImagesResponseDTO.Image.builder()
-                                .url(url)
-                                .thumbnailUrl(thumbnailUrl)
+                                .url(fullUrl(base, key))
+                                .thumbnailUrl(thumbnailUrlFromKey(base, key))
                                 .sequence(img.getImageSequence())
                                 .build();
                     })
-                    .collect(Collectors.toList())
+                    .toList()
             )
             .build();
     }
