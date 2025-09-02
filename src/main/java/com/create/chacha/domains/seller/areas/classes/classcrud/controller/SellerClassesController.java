@@ -43,8 +43,6 @@ public class SellerClassesController {
 
             @RequestPart(value = "thumbnails", required = false)
             MultipartFile[] thumbnails,
-            @RequestPart(value = "thumbnailSeqs", required = false)
-            Integer[] thumbnailSeqs,
 
             @RequestPart(value = "descriptions", required = false)
             MultipartFile[] descriptions,
@@ -54,7 +52,6 @@ public class SellerClassesController {
 	        ClassUpdateRequestDTO req = new ClassUpdateRequestDTO();
 	        req.setClazz(clazz);
 	        req.setThumbnails(thumbnails);
-	        req.setThumbnailSeqs(thumbnailSeqs);
 	        req.setDescriptions(descriptions);
 	        req.setReplaceDescriptionSeqs(replaceDescriptionSeqs);
 	
