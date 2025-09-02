@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ClassReservationSummaryResponseDTO {
 
+    private final Long classId;
     private final String reservationNumber;
     private final String image;
     private final OrderAndReservationStatusEnum status;
