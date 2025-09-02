@@ -3,12 +3,27 @@ package com.create.chacha.domains.seller.areas.classes.classcrud.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 
 import com.create.chacha.domains.shared.constants.ImageStatusEnum;
 import com.create.chacha.domains.shared.entity.classcore.ClassImageEntity;
 
 public interface ClassImageRepository extends CrudRepository<ClassImageEntity, Long>{
+	
+	@Modifying
+	@Query("""
+	update ClassImageEntity i
+	   set i.isDeleted = true, i.deletedAt = CURRENT_TIMESTAMP
+	 where i.classInfo.id = :classId
+	   and i.status = com.create.chacha.domains.shared.constants.ImageStatusEnum.THUMBNAIL
+	   and (i.imageSequence is null or i.imageSequence <> :keepSeq)
+	   and i.isDeleted = false
+	""")
+	int markThumbnailOthersDeleted(@Param("classId") Long classId, @Param("keepSeq") int keepSeq);
+
 	
 	/** 클래스 수정 위한 코드 **/
 	// 특정 seq의 썸네일 1건 (삭제여부 무관)

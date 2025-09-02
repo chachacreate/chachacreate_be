@@ -77,47 +77,33 @@ public class SellerClassServiceImpl implements SellerClassService {
         int updatedThumb = 0, addedDesc = 0, deletedDesc = 0;
 
         // ---------- 썸네일 부분 교체 ----------
+     // ---------- 썸네일 1장 교체 ----------
         MultipartFile[] thumbs = req.getThumbnails();
-        Integer[] thumbSeqs = req.getThumbnailSeqs();
-
         if (thumbs != null && thumbs.length > 0) {
-            if (thumbSeqs == null || thumbSeqs.length != thumbs.length) {
-                throw new IllegalArgumentException("thumbnailSeqs 길이가 thumbnails와 일치해야 합니다.");
-            }
-            // 중복/범위 체크
-            Set<Integer> seen = new HashSet<>();
-            for (Integer seq : thumbSeqs) {
-                if (seq == null || seq < 1 || seq > 3) {
-                    throw new IllegalArgumentException("썸네일 시퀀스는 1~3이어야 합니다. seq=" + seq);
-                }
-                if (!seen.add(seq)) {
-                    throw new IllegalArgumentException("썸네일 시퀀스에 중복이 있습니다. seq=" + seq);
-                }
-            }
+            // 유효한 첫 1장만 사용
+            MultipartFile f = java.util.Arrays.stream(thumbs)
+                    .filter(t -> t != null && !t.isEmpty())
+                    .findFirst()
+                    .orElse(null);
 
-            for (int i = 0; i < thumbs.length; i++) {
-                MultipartFile f = thumbs[i];
-                Integer seq = thumbSeqs[i];
-                if (f == null || f.isEmpty()) {
-                    throw new IllegalArgumentException("썸네일 파일이 비어 있습니다. index=" + i);
-                }
-
+            if (f != null) {
                 // 1) 새 업로드
                 String newOriginalKey;
                 try {
                     newOriginalKey = s3Uploader.uploadImage(f);
                 } catch (Exception ex) {
-                    throw new RuntimeException("썸네일 업로드 실패(index=" + i + "): " + ex.getMessage(), ex);
+                    throw new RuntimeException("썸네일 업로드 실패: " + ex.getMessage(), ex);
                 }
                 String newThumbUrl = s3Uploader.getThumbnailUrl(newOriginalKey);
 
-                // 2) DB 교체 (status/sequence 유지, url만 교체)
+                // 2) DB 교체 (THUMBNAIL, seq=1 고정)
                 ClassImageEntity entity = imageRepo
-                        .findByClassInfo_IdAndStatusAndImageSequence(info.getId(), ImageStatusEnum.THUMBNAIL, seq)
+                        .findByClassInfo_IdAndStatusAndImageSequence(
+                                info.getId(), ImageStatusEnum.THUMBNAIL, 1)
                         .orElseGet(() -> ClassImageEntity.builder()
                                 .classInfo(info)
                                 .status(ImageStatusEnum.THUMBNAIL)
-                                .imageSequence(seq)
+                                .imageSequence(1)
                                 .build());
 
                 String oldUrl = entity.getUrl();
@@ -127,7 +113,10 @@ public class SellerClassServiceImpl implements SellerClassService {
                 imageRepo.save(entity);
                 updatedThumb++;
 
-                // 3) 이전 S3 실제 삭제(원본+썸네일) - best effort
+                // 3) 과거에 남아있을 수 있는 다른 썸네일(seq ≠ 1) 정리(논리삭제)
+                imageRepo.markThumbnailOthersDeleted(info.getId(), 1);
+
+                // 4) 이전 S3 파일 정리(베스트에포트)
                 if (oldUrl != null && !oldUrl.isBlank()) {
                     deleteS3PairByUrl(oldUrl);
                 }
@@ -405,9 +394,10 @@ public class SellerClassServiceImpl implements SellerClassService {
 
             // 썸네일 3장 필수
             MultipartFile[] thumbs = req.getThumbnails();
-            if (thumbs == null || thumbs.length != 3) {
-                throw new IllegalArgumentException("썸네일 이미지는 정확히 3장이어야 합니다.");
+            if (thumbs == null || thumbs.length < 1) {
+                throw new IllegalArgumentException("썸네일 이미지는 최소 1장이어야 합니다.");
             }
+            
             int thumbSeq = 1;
             for (MultipartFile f : thumbs) {
                 if (f == null || f.isEmpty()) throw new IllegalArgumentException("썸네일 파일이 비어 있습니다.");

@@ -12,7 +12,6 @@ public class ClassUpdateRequestDTO {
     // ====== 이미지 부분 교체 전용 필드 ======
     // 썸네일은 1~3 중 필요한 seq만 골라 교체
     private MultipartFile[] thumbnails;   // files (선택)
-    private Integer[] thumbnailSeqs;      // thumbnails 와 1:1 매핑 (예: [1,3])
 
     // 설명 이미지는 "대상 seq만 논리삭제 + 새 이미지 append(max+1)"
     private MultipartFile[] descriptions;       // files (선택)
