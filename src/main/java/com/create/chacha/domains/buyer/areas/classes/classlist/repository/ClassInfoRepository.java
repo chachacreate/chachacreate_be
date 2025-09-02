@@ -14,14 +14,17 @@ import com.create.chacha.domains.shared.entity.classcore.ClassInfoEntity;
 /**
  * 클래스 목록/조건조회/날짜기준 조회 Repository
  *
- * - 목록 카드에 필요한 필드만 VO로 투영
+ * - 메인홈 전체 조회 + storeUrl 기반 특정 스토어 조회를 하나의 메서드로 통합
+ * - storeUrl 파라미터가 NULL → 전체 조회
+ * - storeUrl 값이 있으면 해당 스토어만 조회
  * - 썸네일 정책: imageSequence = 1 (대표 1장)
- * - Pageable을 파라미터로 받아 service에서 page/size/sort 적용
  */
 public interface ClassInfoRepository extends JpaRepository<ClassInfoEntity, Long> {
 
     /**
-     * 목록/검색 + 페이지네이션
+     * 목록/검색 + 스토어별 조회 + 페이지네이션
+     * @param storeUrl null 이면 전체 조회, 값이 있으면 해당 스토어 조회
+     * @param keyword 검색어(클래스 제목 LIKE)
      */
     @Query(value = """
         SELECT new com.create.chacha.domains.shared.classes.vo.ClassCardVO(
@@ -45,11 +48,13 @@ public interface ClassInfoRepository extends JpaRepository<ClassInfoEntity, Long
                 FROM com.create.chacha.domains.shared.entity.classcore.ClassImageEntity i2
                 WHERE i2.classInfo.id = ci.id
                   AND i2.imageSequence = 1
+                  AND i2.status = com.create.chacha.domains.shared.constants.ImageStatusEnum.THUMBNAIL
             )
         LEFT JOIN com.create.chacha.domains.shared.entity.classcore.ClassReservationEntity r
                ON r.classInfo.id = ci.id
               AND r.status = com.create.chacha.domains.shared.constants.OrderAndReservationStatusEnum.ORDER_OK
         WHERE ci.isDeleted = false
+          AND (:storeUrl IS NULL OR st.url = :storeUrl)
           AND (:keyword IS NULL OR ci.title LIKE CONCAT('%', :keyword, '%'))
         GROUP BY ci.id, ci.title, img.url, st.name,
                  ci.addressRoad, ci.price, ci.participant,
@@ -58,29 +63,44 @@ public interface ClassInfoRepository extends JpaRepository<ClassInfoEntity, Long
         countQuery = """
         SELECT COUNT(ci.id)
         FROM ClassInfoEntity ci
+        JOIN ci.store st
         WHERE ci.isDeleted = false
+          AND (:storeUrl IS NULL OR st.url = :storeUrl)
           AND (:keyword IS NULL OR ci.title LIKE CONCAT('%', :keyword, '%'))
         """
     )
-    List<ClassCardVO> findClassCards(@Param("keyword") String keyword, Pageable pageable);
+    List<ClassCardVO> findClassCards(
+        @Param("storeUrl") String storeUrl,
+        @Param("keyword") String keyword,
+        Pageable pageable
+    );
 
     /**
      * 총 개수 카운트 (페이지네이션 메타)
      */
     @Query("""
-        SELECT COUNT(ci.id)
-        FROM ClassInfoEntity ci
-        WHERE ci.isDeleted = false
-          AND (:keyword IS NULL OR ci.title LIKE CONCAT('%', :keyword, '%'))
+	SELECT COUNT(DISTINCT ci.id)
+	FROM ClassInfoEntity ci
+	JOIN ci.store st
+	JOIN ClassImageEntity img
+	     ON img.classInfo.id = ci.id
+	    AND img.imageSequence = 1
+	    AND img.status = com.create.chacha.domains.shared.constants.ImageStatusEnum.THUMBNAIL
+	WHERE ci.isDeleted = false
+	  AND (:storeUrl IS NULL OR st.url = :storeUrl)
+	  AND (:keyword IS NULL OR ci.title LIKE CONCAT('%', :keyword, '%'))
         """)
-    long countClassCards(@Param("keyword") String keyword);
+    long countClassCards(
+        @Param("storeUrl") String storeUrl,
+        @Param("keyword") String keyword
+    );
 
     /**
      * 날짜 기준 "예약 가능" 클래스 조회
-     * - 대상 날짜 구간: [start, end)  (start = YYYY-MM-DDT00:00, end = start + 1day)
-     * - 휴무 제외: 해당 일자에 ClassHoliday 존재하면 제외
-     * - 남은 좌석: participant - COUNT(해당 일자의 예약) > 0
-     * - 대표 썸네일 1장(imageSequence=1 & MIN(id))
+     * - storeUrl NULL → 전체 클래스
+     * - storeUrl 값 존재 → 해당 스토어만
+     * - 대상 날짜 구간: [start, end)
+     * - 휴무 제외 + 좌석 남은 경우만
      */
     @Query("""
         SELECT new com.create.chacha.domains.shared.classes.vo.ClassCardVO(
@@ -110,6 +130,7 @@ public interface ClassInfoRepository extends JpaRepository<ClassInfoEntity, Long
               AND r.status = com.create.chacha.domains.shared.constants.OrderAndReservationStatusEnum.ORDER_OK
               AND r.reservedTime >= :start AND r.reservedTime < :end
         WHERE ci.isDeleted = false
+          AND (:storeUrl IS NULL OR st.url = :storeUrl)
           AND :targetDate >= ci.startDate
           AND :targetDate <= ci.endDate
           AND NOT EXISTS (
@@ -126,13 +147,14 @@ public interface ClassInfoRepository extends JpaRepository<ClassInfoEntity, Long
         ORDER BY ci.startDate ASC
         """)
     List<ClassCardVO> findAvailableClassesByDate(
-        @Param("targetDate") LocalDateTime targetDate, // 보통 start(자정) 전달
-        @Param("start") LocalDateTime start,           // yyyy-MM-ddT00:00
-        @Param("end")   LocalDateTime end              // start + 1 day
+        @Param("storeUrl") String storeUrl,
+        @Param("targetDate") LocalDateTime targetDate,
+        @Param("start") LocalDateTime start,
+        @Param("end")   LocalDateTime end
     );
 
     /**
-     * 단건 조회 (store/seller 까지 필요하면 fetch 최적화)
+     * 단건 조회 (store/seller 까지 fetch)
      */
     @EntityGraph(attributePaths = { "store" })
     @Query("SELECT c FROM ClassInfoEntity c WHERE c.id = :id")

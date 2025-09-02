@@ -23,8 +23,8 @@ import lombok.extern.slf4j.Slf4j;
  * 클래스 목록 조회 비즈니스 로직 구현체
  *
  * - 조건조회(최신순, 마감임박순, 낮은가격순, 높은가격순, 키워드검색)
- * - 파라미터 보정(방어 로직) + 정렬 파싱 + 페이지네이션 계산을 담당
- * - Repository 로부터 VO 리스트와 총합을 받아 응답 DTO로 조립
+ * - storeUrl: "main" → 전체, 그 외에는 해당 스토어 조회
+ * - Repository 호출 후 DTO 조립
  */
 @Slf4j
 @Service
@@ -35,7 +35,6 @@ public class ClassListServiceImpl implements ClassListService {
 
     @Override
     public ClassListResponseDTO getClassList(ClassListFilterDTO f) {
-    	
         // 1) 페이지 파라미터 보정
         int size = Math.min(Math.max(f.getSize(), 1), 100);
         int page = Math.max(f.getPage(), 0);
@@ -47,19 +46,23 @@ public class ClassListServiceImpl implements ClassListService {
         // 3) 검색어 정규화
         String keyword = normalize(f.getKeyword());
 
-        // 4) Repository 호출
-        List<ClassCardVO> rows = classInfoRepository.findClassCards(keyword, pageable);
-        long total = classInfoRepository.countClassCards(keyword);
+        // 4) storeUrl 처리 ("main" → null)
+        String effectiveStoreUrl =
+                ("main".equalsIgnoreCase(f.getStoreUrl())) ? null : f.getStoreUrl();
 
-        // 5) 페이지 메타 계산
+        // 5) Repository 호출
+        List<ClassCardVO> rows = classInfoRepository.findClassCards(effectiveStoreUrl, keyword, pageable);
+        long total = classInfoRepository.countClassCards(effectiveStoreUrl, keyword);
+
+        // 6) 페이지 메타 계산
         int totalPages = (int) Math.ceil((double) total / size);
         boolean last = (page + 1) >= Math.max(totalPages, 1);
 
-        // 6) 로그
-        log.info("클래스 조건조회 실행 - sort={}, keyword={}, page={}, size={}, total={}",
-                f.getSort(), keyword, page, size, total);
+        // 7) 로그
+        log.info("클래스 목록 조회 실행 - storeUrl={}, sort={}, keyword={}, page={}, size={}, total={}",
+                f.getStoreUrl(), f.getSort(), keyword, page, size, total);
 
-        // 7) 응답 조립
+        // 8) 응답 조립
         return ClassListResponseDTO.builder()
                 .content(rows)
                 .page(page)
@@ -68,6 +71,22 @@ public class ClassListServiceImpl implements ClassListService {
                 .totalPages(totalPages)
                 .last(last)
                 .build();
+    }
+
+    @Override
+    public List<ClassCardVO> getAvailableClassesByDate(String storeUrl, LocalDate date) {
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end   = start.plusDays(1);
+
+        // targetDate = 조회 기준일 자정
+        LocalDateTime targetDate = start;
+
+        String effectiveStoreUrl =
+                ("main".equalsIgnoreCase(storeUrl)) ? null : storeUrl;
+
+        return classInfoRepository.findAvailableClassesByDate(
+                effectiveStoreUrl, targetDate, start, end
+        );
     }
 
     /**
@@ -92,24 +111,10 @@ public class ClassListServiceImpl implements ClassListService {
 
     /**
      * 문자열 정규화
-     * - null/공백/빈문자 → null
      */
     private static String normalize(String s) {
         if (s == null) return null;
         String t = s.trim();
         return t.isEmpty() ? null : t;
     }
-
-    @Override
-    public List<ClassCardVO> getAvailableClassesByDate(LocalDate date) {
-        LocalDateTime start = date.atStartOfDay();
-        LocalDateTime end   = start.plusDays(1);
-
-        // targetDate = 조회 기준일의 자정 시간
-        LocalDateTime targetDate = start;
-
-        return classInfoRepository.findAvailableClassesByDate(targetDate, start, end);
-    }
-
-
 }
