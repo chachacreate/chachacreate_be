@@ -1,6 +1,6 @@
 package com.create.chacha.common.util;
 
-
+import com.create.chacha.domains.shared.constants.MemberRoleEnum;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -30,31 +30,62 @@ public class JwtTokenProvider {
     }
 
     /** AccessToken 생성 */
-    public String createAccessToken(String email) {
-        return buildToken(email, accessTokenValidity);
+    public String createAccessToken(Long id, String email, String name, String phone, MemberRoleEnum role) {
+        return buildToken(id, email, name, phone, role, accessTokenValidity);
     }
 
     /** RefreshToken 생성 */
-    public String createRefreshToken(String email) {
-        return buildToken(email, refreshTokenValidity);
+    public String createRefreshToken(Long id, String email, String name, String phone, MemberRoleEnum role) {
+        return buildToken(id, email, name, phone, role, refreshTokenValidity);
     }
 
     /** JWT 토큰 생성 */
-    private String buildToken(String subject, long validity) {
+    private String buildToken(Long id, String email, String name, String phone, MemberRoleEnum role, long validity) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + validity);
 
         return Jwts.builder()
-                .setSubject(subject)
+                .setSubject(email)
+                .claim("id", id)
+                .claim("email", email)
+                .claim("name", name)
+                .claim("phone", phone)
+                .claim("role", role.name())
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
+    /** JWT에서 ID 추출 */
+    public Long getId(String token) {
+        return parseClaims(token).get("id", Long.class);
+    }
+
     /** JWT에서 subject(email) 추출 */
     public String getEmail(String token) {
         return parseClaims(token).getSubject();
+    }
+
+    /** JWT에서 name 추출 */
+    public String getName(String token) {
+        return parseClaims(token).get("name", String.class);
+    }
+
+    /** JWT에서 phone 추출 */
+    public String getPhone(String token) {
+        return parseClaims(token).get("phone", String.class);
+    }
+
+    /** JWT에서 role 추출 */
+    public MemberRoleEnum getRole(String token) {
+        String roleStr = parseClaims(token).get("role", String.class);
+        return MemberRoleEnum.valueOf(roleStr);
+    }
+
+    /** JWT에서 모든 Claims 추출 */
+    public Claims getAllClaims(String token) {
+        return parseClaims(token);
     }
 
     /** JWT 검증 */
@@ -72,6 +103,11 @@ public class JwtTokenProvider {
     public long getExpiration(String token) {
         Date expiration = parseClaims(token).getExpiration();
         return expiration.getTime() - System.currentTimeMillis();
+    }
+
+    /** JWT 만료 여부 확인 */
+    public boolean isTokenExpired(String token) {
+        return parseClaims(token).getExpiration().before(new Date());
     }
 
     /** Claims 파싱, 만료된 토큰도 Claims 반환 */
