@@ -51,6 +51,7 @@ public class AuthController {
                 .id(tokenDTO.getLogin().getId())
                 .email(loginRequest.getEmail())
                 .name(tokenDTO.getLogin().getName())
+                .phone(tokenDTO.getLogin().getPhone())
                 .build();
         TokenResponseDTO responseDTO = new TokenResponseDTO(loginMember, tokenDTO.getAccessToken(), null);
         return new ApiResponse<>(ResponseCode.LOGIN_SUCCESS, responseDTO);

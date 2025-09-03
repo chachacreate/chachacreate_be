@@ -4,6 +4,7 @@ import com.create.chacha.common.util.JwtTokenProvider;
 import com.create.chacha.domains.shared.member.dto.response.TokenResponseDTO;
 import com.create.chacha.domains.shared.constants.MemberRoleEnum;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
+import com.create.chacha.domains.shared.member.exception.InvalidPasswordException;
 import com.create.chacha.domains.shared.repository.MemberRepository;
 import com.create.chacha.domains.shared.member.service.MemberLoginService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class MemberLoginServiceImpl implements MemberLoginService {
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자"));
 
         if (!passwordEncoder.matches(password, member.getPassword())) {
-            throw new RuntimeException("비밀번호 불일치");
+            throw new InvalidPasswordException("비밀번호 불일치");
         }
 
         String accessToken = jwtTokenProvider.createAccessToken(
@@ -71,23 +72,18 @@ public class MemberLoginServiceImpl implements MemberLoginService {
             throw new RuntimeException("유효하지 않은 RefreshToken 입니다.");
         }
 
-        // RefreshToken에서 사용자 정보 추출
-        Long id = jwtTokenProvider.getId(refreshToken);
-        String userName = jwtTokenProvider.getName(refreshToken);
-        String phone = jwtTokenProvider.getPhone(refreshToken);
-        MemberRoleEnum role = jwtTokenProvider.getRole(refreshToken);
+        // DB에서 최신 사용자 정보 조회
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자"));
 
-        // 새로운 AccessToken 발급 (모든 사용자 정보 포함)
-        String newAccessToken = jwtTokenProvider.createAccessToken(id, email, userName, phone, role);
-
-        // MemberEntity 객체 생성 (TokenResponseDTO용)
-        MemberEntity member = MemberEntity.builder()
-                .id(id)
-                .email(email)
-                .name(userName)
-                .phone(phone)
-                .memberRole(role)
-                .build();
+        // 새로운 AccessToken 발급 (DB에서 가져온 최신 정보 사용)
+        String newAccessToken = jwtTokenProvider.createAccessToken(
+                member.getId(),
+                member.getEmail(),
+                member.getName(),
+                member.getPhone(),
+                member.getMemberRole()
+        );
 
         return new TokenResponseDTO(member, newAccessToken, refreshToken);
     }
