@@ -393,15 +393,14 @@ public class SellerClassServiceImpl implements SellerClassService {
 
             List<ClassImageEntity> images = new ArrayList<>();
 
-            // 썸네일 3장 필수
+            // === 썸네일: 1장 이상 ===
             MultipartFile[] thumbs = req.getThumbnails();
             if (thumbs == null || thumbs.length < 1) {
                 throw new IllegalArgumentException("썸네일 이미지는 최소 1장이어야 합니다.");
             }
-            
             int thumbSeq = 1;
             for (MultipartFile f : thumbs) {
-                if (f == null || f.isEmpty()) throw new IllegalArgumentException("썸네일 파일이 비어 있습니다.");
+                if (f == null || f.isEmpty()) continue;
                 try {
                     String originalKey  = s3Uploader.uploadImage(f);
                     String thumbnailUrl = s3Uploader.getThumbnailUrl(originalKey);
@@ -419,26 +418,32 @@ public class SellerClassServiceImpl implements SellerClassService {
                 }
             }
 
-            // 설명 이미지 0..N
-            MultipartFile[] descs = req.getDescriptions();
-            if (descs != null && descs.length > 0) {
-                int descSeq = 1;
-                for (MultipartFile f : descs) {
-                    if (f == null || f.isEmpty()) continue;
-                    try {
-                        String originalKey = s3Uploader.uploadImage(f);
-                        String originalUrl = s3Uploader.getFullUrl(originalKey);
+            // === 설명 이미지는 '최종 HTML의 URL'만 저장 ===
+            int descSeq = 1; // ✅ 여기서 한 번만 선언
+            List<String> urlList = (c.getDetailImageUrls() == null) ? List.of() : c.getDetailImageUrls();
+            for (String url : urlList) {
+                if (url == null || url.isBlank()) continue;
+                ClassImageEntity e = ClassImageEntity.builder()
+                        .classInfo(saved)
+                        .status(ImageStatusEnum.DESCRIPTION)
+                        .imageSequence(descSeq++)
+                        .build();
+                e.setUrl(url.trim());
+                e.setIsDeleted(Boolean.FALSE);
+                images.add(e);
+            }
 
-                        ClassImageEntity e = ClassImageEntity.builder()
-                                .classInfo(saved)
-                                .status(ImageStatusEnum.DESCRIPTION)
-                                .imageSequence(descSeq++)
-                                .build();
-                        e.setUrl(originalUrl);
-                        e.setIsDeleted(Boolean.FALSE);
-                        images.add(e);
-                    } catch (Exception ex) {
-                        throw new RuntimeException("설명 이미지 업로드 실패: " + ex.getMessage(), ex);
+            // === 에디터 도중 올렸지만 최종 HTML에 없는 URL은 S3에서 삭제 ===
+            List<String> uploaded = (c.getEditorUploadedUrls() == null) ? List.of() : c.getEditorUploadedUrls();
+            if (!uploaded.isEmpty()) {
+                Set<String> finalSet = new HashSet<>();
+                for (String u : urlList) {
+                    if (u != null && !u.isBlank()) finalSet.add(u.trim());
+                }
+                for (String u : uploaded) {
+                    if (u == null || u.isBlank()) continue;
+                    if (!finalSet.contains(u.trim())) {
+                        deleteS3PairByUrl(u);
                     }
                 }
             }

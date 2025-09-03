@@ -30,6 +30,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> {
+                	
+                	authorize.requestMatchers("/api/files/upload").permitAll();
 
                     // 공통 화이트리스트
                     if (securityProperties.getWhiteList() != null) {
