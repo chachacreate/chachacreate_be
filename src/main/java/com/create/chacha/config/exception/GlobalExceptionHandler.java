@@ -17,6 +17,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // 로그인 예외
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ApiResponse<String> handlePasswordException(InvalidPasswordException e) {
+        log.warn("비밀번호 오류: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.LOGIN_FAIL, e.getMessage());
+    }
     // 회원가입 관련 예외들
     @ExceptionHandler(DuplicateEmailException.class)
     public ApiResponse<String> handleDuplicateEmail(DuplicateEmailException e) {
@@ -24,7 +30,7 @@ public class GlobalExceptionHandler {
         return new ApiResponse<>(ResponseCode.REGISTER_FAIL, e.getMessage());
     }
 
-    @ExceptionHandler({InvalidRequestException.class, InvalidPasswordException.class})
+    @ExceptionHandler({InvalidRequestException.class})
     public ApiResponse<String> handleBadRequest(RuntimeException e) {
         log.warn("잘못된 요청: {}", e.getMessage());
         return new ApiResponse<>(ResponseCode.REGISTER_FAIL, e.getMessage());
