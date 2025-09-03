@@ -15,7 +15,7 @@ public class LegacyInfoServiceImpl implements LegacyInfoService {
     private final MemberAddressRepository memberAddressRepository;
 
     @Override
-    public MemberEntity getSellerInfo(Integer memberId){
+    public MemberEntity getSellerInfo(Integer memberId) {
         MemberEntity responseMember = new MemberEntity();
         memberRepository.findById(Long.valueOf(memberId)).ifPresent(member -> {
             responseMember.setName(member.getName());
@@ -26,9 +26,22 @@ public class LegacyInfoServiceImpl implements LegacyInfoService {
     }
 
     @Override
-    public MemberAddressEntity getMemberAddress(Integer memberId){
+    public MemberAddressEntity getMemberAddress(Integer memberId) {
         MemberAddressEntity responseMemberAddress = new MemberAddressEntity();
         memberAddressRepository.findFirstByMember_IdAndIsDefaultOrderByIdAsc(Long.valueOf(memberId), true).ifPresent(addr -> {
+            responseMemberAddress.setPostNum(addr.getPostNum());
+            responseMemberAddress.setAddressRoad(addr.getAddressRoad());
+            responseMemberAddress.setAddressDetail(addr.getAddressDetail());
+            responseMemberAddress.setAddressExtra(addr.getAddressExtra());
+        });
+        return responseMemberAddress;
+    }
+
+    @Override
+    public MemberAddressEntity getMemberAddressByAddressId(Integer addressId) {
+        MemberAddressEntity responseMemberAddress = new MemberAddressEntity();
+        memberAddressRepository.findById(Long.valueOf(addressId)).ifPresent(addr -> {
+            responseMemberAddress.setId(addr.getId());
             responseMemberAddress.setPostNum(addr.getPostNum());
             responseMemberAddress.setAddressRoad(addr.getAddressRoad());
             responseMemberAddress.setAddressDetail(addr.getAddressDetail());
