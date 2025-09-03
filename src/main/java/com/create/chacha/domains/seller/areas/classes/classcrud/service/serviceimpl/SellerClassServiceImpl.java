@@ -349,6 +349,7 @@ public class SellerClassServiceImpl implements SellerClassService {
                 .participant(info.getParticipant())
                 .price(info.getPrice())
                 .period(period)
+                .timeInterval(info.getTimeInterval())
                 .createdAt(info.getCreatedAt())
                 .updatedAt(info.getUpdatedAt())
                 .deletedAt(info.getDeletedAt())

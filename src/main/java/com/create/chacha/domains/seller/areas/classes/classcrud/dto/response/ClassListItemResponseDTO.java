@@ -16,7 +16,8 @@ public class ClassListItemResponseDTO {
     private String location;         // postNum addressRoad addressDetail addressExtra (스페이스 1칸)
     private Integer participant;     // 최대 참여 인원
     private Integer price;           // 회당 가격
-    private String period;           // "yyyy-MM-dd ~ yyyy-MM-dd"
+    private String period;  
+    private Integer timeInterval;// "yyyy-MM-dd ~ yyyy-MM-dd"
     private LocalDateTime createdAt; // 등록일
     private LocalDateTime updatedAt; // 최근 수정일
     private LocalDateTime deletedAt; // 최근 삭제일 (없으면 null)
