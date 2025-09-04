@@ -26,8 +26,15 @@ public class LegacyMemberController {
         return new ApiResponse<>(ResponseCode.OK, memberEntity);
     }
     @GetMapping("/info/memberAdress/{memberId}")
-    public ApiResponse<MemberAddressEntity> sendMemberEntityForMemberAdress(@PathVariable Integer memberId){
+    public ApiResponse<MemberAddressEntity> sendMemberAddressEntityByMemberId(@PathVariable Integer memberId){
         MemberAddressEntity address = legacyInfoService.getMemberAddress(memberId);
+        log.info(address.toString());
+        return new ApiResponse<>(ResponseCode.OK, address);
+    }
+
+    @GetMapping("/info/memberAdressByAddresId/{addressId}")
+    public ApiResponse<MemberAddressEntity> sendMemberAddressEntityByMemberAddressId(@PathVariable Integer addressId){
+        MemberAddressEntity address = legacyInfoService.getMemberAddressByAddressId(addressId);
         log.info(address.toString());
         return new ApiResponse<>(ResponseCode.OK, address);
     }
