@@ -37,7 +37,7 @@ public class ClassReservationQueryController {
      * - q: 검색어(주문번호, 클래스명 대상)
      *   예) /api/mypage/members/reservations?q=RV-2025
      */
-    @GetMapping("mypage/members/reservations")
+    @GetMapping("/mypage/members/reservations")
     public ApiResponse<List<ClassReservationSummaryResponseDTO>> getMyClassReservations(
             @AuthenticationPrincipal SecurityUser principal,
             @RequestParam(name = "filter", required = false, defaultValue = "전체") String filterRaw,

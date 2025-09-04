@@ -1,5 +1,7 @@
 package com.create.chacha.domains.buyer.areas.classes.reservations.service.serviceimpl;
 
+import com.create.chacha.common.util.LegacyAPIUtil;
+import com.create.chacha.common.util.dto.LegacyStoreDTO;
 import com.create.chacha.domains.buyer.areas.classes.reservations.dto.response.ClassReservationSummaryResponseDTO;
 import com.create.chacha.domains.buyer.areas.classes.reservations.repository.ClassReservationQueryRepository;
 import com.create.chacha.domains.buyer.areas.classes.reservations.service.ClassReservationQueryService;
@@ -19,6 +21,7 @@ import java.util.List;
 public class ClassReservationQueryServiceImpl implements ClassReservationQueryService {
 
     private final ClassReservationQueryRepository repository;
+    private final LegacyAPIUtil legacyAPIUtil;
 
     @Transactional(readOnly = true)
     @Override
@@ -26,7 +29,19 @@ public class ClassReservationQueryServiceImpl implements ClassReservationQuerySe
     		final String normalizedFilter = normalizeFilter(filterRaw); // "ALL" | "UPCOMING" | "PAST" | "CANCELED"
         final String kw = normalizeKeyword(q);                      // null 또는 "%keyword%"
         final LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
-        return repository.findSummariesByMemberAndFilterAndKeyword(memberId, now, normalizedFilter, kw);
+
+        // DB에서 예약 목록 조회 (이때는 storeId만 포함)
+        List<ClassReservationSummaryResponseDTO> reservations =
+                repository.findSummariesByMemberAndFilterAndKeyword(memberId, now, normalizedFilter, kw);
+
+        // storeId를 통해 storeName, storeUrl 채우기(Legacy API)
+        reservations.forEach(r -> {
+            LegacyStoreDTO legacyStore = legacyAPIUtil.getLegacyStoreDataById(r.getStoreId());
+            r.setStoreName(legacyStore.getStoreName());
+            r.setStoreUrl(legacyStore.getStoreUrl());
+        });
+
+        return reservations;
     }
 
     /**
