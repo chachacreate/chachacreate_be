@@ -14,6 +14,11 @@ public class LegacyInfoServiceImpl implements LegacyInfoService {
     private final MemberAddressRepository memberAddressRepository;
 
     @Override
+    public MemberEntity getMemberById(Integer memberId) {
+        return memberRepository.findById(memberId.longValue()).orElse(null);
+    }
+
+    @Override
     public MemberEntity getSellerInfo(Integer memberId) {
         MemberEntity responseMember = new MemberEntity();
         memberRepository.findById(Long.valueOf(memberId)).ifPresent(member -> {
@@ -28,6 +33,7 @@ public class LegacyInfoServiceImpl implements LegacyInfoService {
     public MemberAddressEntity getMemberAddress(Integer memberId) {
         MemberAddressEntity responseMemberAddress = new MemberAddressEntity();
         memberAddressRepository.findFirstByMember_IdAndIsDefaultOrderByIdAsc(Long.valueOf(memberId), true).ifPresent(addr -> {
+            responseMemberAddress.setId(addr.getId());
             responseMemberAddress.setPostNum(addr.getPostNum());
             responseMemberAddress.setAddressRoad(addr.getAddressRoad());
             responseMemberAddress.setAddressDetail(addr.getAddressDetail());

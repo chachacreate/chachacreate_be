@@ -6,6 +6,7 @@ import com.create.chacha.config.security.SecurityUser;
 import com.create.chacha.domains.shared.entity.member.MemberAddressEntity;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
 import com.create.chacha.common.util.legacy.service.LegacyInfoService;
+import com.create.chacha.domains.shared.member.exception.MemberNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -42,13 +43,13 @@ public class LegacyController {
     }
 
     @GetMapping("/info/member/{memberId}")
-    public ApiResponse<MemberEntity> sendMemberEntityByMemberId(@PathVariable Integer memberId, @AuthenticationPrincipal SecurityUser user){
-        if(user.getMemberId().equals(memberId.longValue())){
-            MemberEntity memberEntity = user.getMemberEntity();
-            log.info(memberEntity.toString());
+    public ApiResponse<MemberEntity> sendMemberEntityByMemberId(@PathVariable Integer memberId){
+        try {
+            MemberEntity memberEntity = legacyInfoService.getMemberById(memberId);
             return new ApiResponse<>(ResponseCode.OK, memberEntity);
+        } catch (MemberNotFoundException e) {
+            return new ApiResponse<>(ResponseCode.NOT_FOUND, null);
         }
-        return new ApiResponse<>(ResponseCode.FAIL, null);
     }
 
 }
