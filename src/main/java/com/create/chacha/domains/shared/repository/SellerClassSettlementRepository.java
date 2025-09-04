@@ -1,113 +1,213 @@
 package com.create.chacha.domains.shared.repository;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.springframework.data.jpa.repository.*;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.create.chacha.domains.seller.areas.settlement.repository.SettlementResponseProjection;
-import com.create.chacha.domains.shared.entity.member.MemberEntity;
+import com.create.chacha.domains.seller.areas.settlement.dto.response.ClassDailySettlementResponseDTO;
+import com.create.chacha.domains.seller.areas.settlement.dto.response.ClassOptionResponseDTO;
+import com.create.chacha.domains.seller.areas.settlement.dto.response.StoreMonthlySettlementItemDTO;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import lombok.RequiredArgsConstructor;
 
 /**
- * 판매자 정산 조회 전용 Repository
- * - Native 쿼리 결과를 Projection으로 반환
+ * - ERD 기준으로 class_info / class_reservation / class_image / seller_settlement만 사용
+ * - Legacy store/seller는 Service에서 LegacyAPIUtil로 조회 후 Long ID로 전달
  */
 @Repository
-public interface SellerClassSettlementRepository extends JpaRepository<MemberEntity, Long> {
+@RequiredArgsConstructor
+public class SellerClassSettlementRepository {
+
+    @PersistenceContext
+    private final EntityManager em;
 
     /**
-     * [전체] 특정 회원(memberId) 소속 판매자의 월별 정산 요약
-     * - settlementDate: (ss.created_at + 1개월)의 '20일 00:00:00'
-     * - amount: 해당 월의 ORDER_OK 예약 금액 합계
-     * - 계좌/은행/판매자명, 상태, 월별 예약 데이터 최종 갱신일
+     * [드롭다운]
      */
-    @Query(value = """
-        SELECT
-          STR_TO_DATE(
-            CONCAT(DATE_FORMAT(DATE_ADD(ss.created_at, INTERVAL 1 MONTH), '%Y-%m'), '-20 00:00:00'),
-            '%Y-%m-%d %H:%i:%s'
-          ) AS settlementDate,
-          COALESCE(a.sum_amount, 0)          AS amount,
-          s.account                           AS account,
-          s.bank                              AS bank,
-          m.name                              AS name,
-          ss.status                           AS status,
-          a.max_updated_at                    AS updateAt
-        FROM member m
-        JOIN seller s
-          ON s.member_id = m.id
-        JOIN seller_settlement ss
-          ON ss.seller_id = s.id                            
-        LEFT JOIN (
+    @SuppressWarnings("unchecked")
+    public List<ClassOptionResponseDTO> findClassOptionByStore(Long storeId) {
+        String sql = """
             SELECT
-                st.seller_id                              AS seller_id,
-                DATE_FORMAT(cr.reserved_time, '%Y-%m-01') AS month_start,
-                SUM(ci.price)                             AS sum_amount,
-                MAX(cr.updated_at)                        AS max_updated_at
-            FROM store st
-            JOIN class_info ci
-              ON ci.store_id = st.id
-             AND IFNULL(ci.is_deleted, 0) = 0
-            JOIN class_reservation cr
-              ON cr.class_info_id = ci.id
-            WHERE IFNULL(st.is_deleted, 0) = 0
-              AND cr.status = 'ORDER_OK'
-            GROUP BY st.seller_id, DATE_FORMAT(cr.reserved_time, '%Y-%m-01')
-        ) a
-          ON a.seller_id   = s.id                           
-         AND a.month_start = DATE_FORMAT(ss.created_at, '%Y-%m-01')
-        WHERE m.id = :memberId
-        ORDER BY ss.created_at DESC, ss.id DESC
-        """, nativeQuery = true)
-    List<SettlementResponseProjection> findSettlementsByMemberId(@Param("memberId") Long memberId);
+              ci.id    AS class_id,
+              ci.title AS class_name
+            FROM class_info ci
+            WHERE ci.store_id = :storeId
+            ORDER BY ci.id DESC
+        """;
 
+        List<Object[]> rows = em.createNativeQuery(sql)
+                .setParameter("storeId", storeId)
+                .getResultList();
+
+        List<ClassOptionResponseDTO> list = new ArrayList<>(rows.size());
+        for (Object[] r : rows) {
+            Long classId = ((Number) r[0]).longValue();
+            String className = (String) r[1];
+
+            list.add(ClassOptionResponseDTO.builder()
+                    .id(classId)
+                    .name(className)
+                    .build());
+        }
+        return list;
+    }
 
     /**
-     * [특정 클래스] 특정 회원(memberId) + 특정 클래스(classId)의 월별 정산 요약
-     * - 상동. 단, 집계 서브쿼리에서 ci.id = :classId 조건 추가
+     *  특정 클래스의 일별 정산 조회
+     *  - 대표이미지: class_image.status='THUMBNAIL' AND image_sequence=1 AND is_deleted=0
+     *  - 일별 금액 집계: cr.status='ORDER_OK'만 합산, DATE(cr.created_at) 단위로 SUM(ci.price)
      */
-    @Query(value = """
-        SELECT
-          STR_TO_DATE(
-            CONCAT(DATE_FORMAT(DATE_ADD(ss.created_at, INTERVAL 1 MONTH), '%Y-%m'), '-20 00:00:00'),
-            '%Y-%m-%d %H:%i:%s'
-          ) AS settlementDate,
-          COALESCE(a.sum_amount, 0)          AS amount,
-          s.account                           AS account,
-          s.bank                              AS bank,
-          m.name                              AS name,
-          ss.status                           AS status,
-          a.max_updated_at                    AS updateAt
-        FROM member m
-        JOIN seller s
-          ON s.member_id = m.id
-        JOIN seller_settlement ss
-          ON ss.seller_id = s.id
-        LEFT JOIN (
+    @SuppressWarnings("unchecked")
+    public ClassDailySettlementResponseDTO findClassDailySettlement(Long storeId, Long classId) {
+        // 1) 클래스명 
+        String titleSql = """
+            SELECT ci.title
+            FROM class_info ci
+            WHERE ci.id = :classId
+              AND ci.store_id = :storeId
+            LIMIT 1
+        """;
+        Object titleObj = em.createNativeQuery(titleSql)
+                .setParameter("classId", classId)
+                .setParameter("storeId", storeId)
+                .getSingleResult();
+        if (titleObj == null) return null;
+        String className = String.valueOf(titleObj);
+
+        // 2) 대표 썸네일 1개
+        String thumbSql = """
+            SELECT ci2.url
+            FROM class_image ci2
+            WHERE ci2.class_info_id = :classId
+              AND ci2.image_sequence = 1
+              AND ci2.is_deleted = 0
+              AND ci2.status = 'THUMBNAIL'
+            LIMIT 1
+        """;
+        String thumbnail = (String) em.createNativeQuery(thumbSql)
+                .setParameter("classId", classId)
+                .getResultStream().findFirst().orElse(null);
+
+        // 3) 일별 결제금액 집계
+        String dailySql = """
             SELECT
-                st.seller_id                              AS seller_id,
-                DATE_FORMAT(cr.reserved_time, '%Y-%m-01') AS month_start,
-                SUM(ci.price)                             AS sum_amount,
-                MAX(cr.updated_at)                        AS max_updated_at
-            FROM store st
-            JOIN class_info ci
-              ON ci.store_id = st.id
-             AND IFNULL(ci.is_deleted, 0) = 0
+                DATE(cr.created_at) AS ymd,             -- YYYY-MM-DD
+                SUM(ci.price)       AS amt              -- 해당일 결제 금액 합계 (ORDER_OK만)
+            FROM class_info ci
             JOIN class_reservation cr
               ON cr.class_info_id = ci.id
-            WHERE IFNULL(st.is_deleted, 0) = 0
-              AND cr.status = 'ORDER_OK'
-              AND ci.id = :classId                       
-            GROUP BY st.seller_id, DATE_FORMAT(cr.reserved_time, '%Y-%m-01')
-        ) a
-          ON a.seller_id   = s.id
-         AND a.month_start = DATE_FORMAT(ss.created_at, '%Y-%m-01')
-        WHERE m.id = :memberId
-        ORDER BY ss.created_at DESC, ss.id DESC
-        """, nativeQuery = true)
-    List<SettlementResponseProjection> findSettlementsByMemberIdAndClassId(
-            @Param("memberId") Long memberId,
-            @Param("classId")  Long classId
-    );
+             AND cr.status = 'ORDER_OK'
+            WHERE ci.id = :classId
+              AND ci.store_id = :storeId
+            GROUP BY DATE(cr.created_at)
+            ORDER BY ymd ASC
+        """;
+        List<Object[]> rows = em.createNativeQuery(dailySql)
+                .setParameter("classId", classId)
+                .setParameter("storeId", storeId)
+                .getResultList();
+
+        var daily = new java.util.ArrayList<ClassDailySettlementResponseDTO.DailyEntry>(rows.size());
+        for (Object[] r : rows) {
+            String ymd = String.valueOf(r[0]);                   // "YYYY-MM-DD"
+            Integer amount = r[1] == null ? 0 : ((Number) r[1]).intValue();
+            daily.add(ClassDailySettlementResponseDTO.DailyEntry.builder()
+                    .date(ymd)
+                    .amount(amount)
+                    .build());
+        }
+
+        return ClassDailySettlementResponseDTO.builder()
+                .classId(classId)
+                .className(className)
+                .thumbnailUrl(thumbnail)
+                .daily(daily)
+                .build();
+    }
+
+    /**
+     * 스토어의 전체 클래스들에 대한 월별 정산 조회
+     * - class_reservation.created_at 기준 월("YYYY-MM")로 집계
+     * - 조건: storeId 일치, cr.status='ORDER_OK'만 합산
+     * - last_updated: 해당 월 범위 내 class_reservation.MAX(updated_at)
+     * - 조인은 class_info만 (store_id 필터링 목적)
+     */
+    @SuppressWarnings("unchecked")
+    public List<StoreMonthlySettlementItemDTO> findStoreMonthlySettlements(Long storeId) {
+        String sql = """
+            SELECT
+              DATE_FORMAT(cr.created_at, '%Y-%m') AS ym,
+              SUM(CASE WHEN cr.status = 'ORDER_OK' THEN ci.price ELSE 0 END) AS total_amt,
+              MAX(cr.updated_at) AS last_updated
+            FROM class_reservation cr
+            JOIN class_info ci ON ci.id = cr.class_info_id
+            WHERE ci.store_id = :storeId
+            GROUP BY DATE_FORMAT(cr.created_at, '%Y-%m')
+            ORDER BY ym DESC
+        """;
+
+        List<Object[]> rows = em.createNativeQuery(sql)
+                .setParameter("storeId", storeId)
+                .getResultList();
+
+        List<StoreMonthlySettlementItemDTO> list = new ArrayList<>(rows.size());
+        for (Object[] r : rows) {
+            String ym = (String) r[0];                 // "YYYY-MM"
+            Long amount = r[1] == null ? 0L : ((Number) r[1]).longValue();
+            Timestamp last = (Timestamp) r[2];
+
+            // "YYYY-MM" → 해당 월의 1일 00:00:00 로 LocalDateTime 구성
+            LocalDateTime settlementDate = YearMonth.parse(ym).atDay(1).atStartOfDay();
+            LocalDateTime updateAt = (last == null) ? null : last.toLocalDateTime();
+
+            list.add(StoreMonthlySettlementItemDTO.builder()
+                    .settlementDate(settlementDate)
+                    .amount(amount)
+                    .account(null)   // Service에서 LegacySeller.account로 채움
+                    .bank(null)      // Service에서 LegacySeller.accountBank로 채움
+                    .name(null)      // Service에서 토큰 이름으로 채움
+                    .status(null)    // Service에서 월별 최신 상태로 채움
+                    .updateAt(updateAt)
+                    .build());
+        }
+        return list;
+    }
+
+    /**
+     * 월별 정산 상태 조회
+     * - seller_settlement에서 sellerId별로 월 키("YYYY-MM")를 만들고,
+     *   updated_at DESC 기준 가장 최신 status를 조회
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Integer> findSellerMonthlyLatestStatus(Long sellerId) {
+        String sql = """
+            SELECT
+              DATE_FORMAT(ss.updated_at, '%Y-%m') AS ym,
+              SUBSTRING_INDEX(GROUP_CONCAT(ss.status ORDER BY ss.updated_at DESC), ',', 1) AS latest_status
+            FROM seller_settlement ss
+            WHERE ss.seller_id = :sellerId
+            GROUP BY DATE_FORMAT(ss.updated_at, '%Y-%m')
+        """;
+
+        List<Object[]> rows = em.createNativeQuery(sql)
+                .setParameter("sellerId", sellerId)
+                .getResultList();
+
+        Map<String, Integer> map = new HashMap<>(rows.size());
+        for (Object[] r : rows) {
+            String ym = (String) r[0];
+            String statusStr = r[1] == null ? null : String.valueOf(r[1]);
+            Integer status = (statusStr == null) ? null : Integer.valueOf(statusStr);
+            map.put(ym, status);
+        }
+        return map;
+    }
 }
