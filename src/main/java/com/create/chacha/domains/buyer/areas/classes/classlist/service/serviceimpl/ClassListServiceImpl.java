@@ -4,6 +4,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.create.chacha.common.util.LegacyAPIUtil;
+import com.create.chacha.common.util.dto.LegacySellerDTO;
+import com.create.chacha.common.util.dto.LegacyStoreDTO;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -32,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ClassListServiceImpl implements ClassListService {
 
     private final ClassInfoRepository classInfoRepository;
+    private final LegacyAPIUtil legacyAPIUtil;
 
     @Override
     public ClassListResponseDTO getClassList(ClassListFilterDTO f) {
@@ -47,12 +51,22 @@ public class ClassListServiceImpl implements ClassListService {
         String keyword = normalize(f.getKeyword());
 
         // 4) storeUrl 처리 ("main" → null)
-        String effectiveStoreUrl =
-                ("main".equalsIgnoreCase(f.getStoreUrl())) ? null : f.getStoreUrl();
+        Long storeId = resolveStoreId(f.getStoreUrl());
 
         // 5) Repository 호출
-        List<ClassCardVO> rows = classInfoRepository.findClassCards(effectiveStoreUrl, keyword, pageable);
-        long total = classInfoRepository.countClassCards(effectiveStoreUrl, keyword);
+        List<ClassCardVO> rows = classInfoRepository.findClassCards(storeId, keyword, pageable);
+        long total = classInfoRepository.countClassCards(storeId, keyword);
+
+        if (storeId == null) { // main일 경우 각 row마다 조회
+            rows.forEach(c -> {
+                LegacyStoreDTO legacyStore = legacyAPIUtil.getLegacyStoreDataById(c.getStoreId());
+                c.setStoreName(legacyStore.getStoreName());
+            });
+        } else { // 스토어별 조회일 경우 name 설정은 한 번만 하면 됨
+            LegacyStoreDTO legacyStore = legacyAPIUtil.getLegacyStoreData(f.getStoreUrl());
+            rows.forEach(c -> c.setStoreName(legacyStore.getStoreName()));
+        }
+
 
         // 6) 페이지 메타 계산
         int totalPages = (int) Math.ceil((double) total / size);
@@ -81,12 +95,23 @@ public class ClassListServiceImpl implements ClassListService {
         // targetDate = 조회 기준일 자정
         LocalDateTime targetDate = start;
 
-        String effectiveStoreUrl =
-                ("main".equalsIgnoreCase(storeUrl)) ? null : storeUrl;
+        Long storeId = resolveStoreId(storeUrl);
 
-        return classInfoRepository.findAvailableClassesByDate(
-                effectiveStoreUrl, targetDate, start, end
+        List<ClassCardVO> rows = classInfoRepository.findAvailableClassesByDate(
+                storeId, targetDate, start, end
         );
+
+        if (storeId == null) { // main일 경우 각 row마다 조회
+            rows.forEach(c -> {
+                LegacyStoreDTO legacyStore = legacyAPIUtil.getLegacyStoreDataById(c.getStoreId());
+                c.setStoreName(legacyStore.getStoreName());
+            });
+        } else { // 스토어별 조회일 경우 name 설정은 한 번만 하면 됨
+            LegacyStoreDTO legacyStore = legacyAPIUtil.getLegacyStoreData(storeUrl);
+            rows.forEach(c -> c.setStoreName(legacyStore.getStoreName()));
+        }
+
+        return rows;
     }
 
     /**
@@ -116,5 +141,15 @@ public class ClassListServiceImpl implements ClassListService {
         if (s == null) return null;
         String t = s.trim();
         return t.isEmpty() ? null : t;
+    }
+
+    // main 이면 null, 유효한 url이면 해당 storeId 반환
+    // Integer > Long 형 변환 처리
+    private Long resolveStoreId(String storeUrl) {
+        if ("main".equalsIgnoreCase(storeUrl)) {
+            return null;
+        }
+        LegacyStoreDTO legacyStore = legacyAPIUtil.getLegacyStoreData(storeUrl);
+        return legacyStore.getStoreId().longValue();
     }
 }

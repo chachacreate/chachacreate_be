@@ -13,6 +13,7 @@ import java.util.List;
 @Repository
 public interface ClassReservationQueryRepository extends JpaRepository<ClassReservationEntity, String> {
 
+    // st.name, st.url 삭제
 	@Query("""
 		    SELECT new com.create.chacha.domains.buyer.areas.classes.reservations.dto.response.ClassReservationSummaryResponseDTO(
 		        ci.id, 
@@ -21,10 +22,8 @@ public interface ClassReservationQueryRepository extends JpaRepository<ClassRese
 		        cr.status, 
 		        cr.reservedTime, 
 		        ci.title, 
-		        ci.addressRoad, 
-		        st.name, 
-		        st.id, 
-		        st.url, 
+		        ci.addressRoad,
+		        ci.store.id,
 		        CASE
 		            WHEN cr.status = com.create.chacha.domains.shared.constants.OrderAndReservationStatusEnum.ORDER_OK
 		                 AND cr.reservedTime >= :now
@@ -44,7 +43,6 @@ public interface ClassReservationQueryRepository extends JpaRepository<ClassRese
 		    )
 		    FROM ClassReservationEntity cr
 		    JOIN cr.classInfo ci
-		    JOIN ci.store st
 		    LEFT JOIN com.create.chacha.domains.shared.entity.classcore.ClassImageEntity cimg
 		           ON cimg.classInfo = ci
 		          AND cimg.imageSequence = 1
