@@ -25,4 +25,27 @@ public class ClassReservationSummaryResponseDTO {
 
     private String storeName;  // Legacy API에서 채움
     private String storeUrl;   // Legacy API에서 채움
+
+    // JPQL용 생성자(final로 선언한 변수들만)
+    public ClassReservationSummaryResponseDTO(
+            Long classId,
+            String reservationNumber,
+            String image,
+            OrderAndReservationStatusEnum status,
+            LocalDateTime reservedTime,
+            String classTitle,
+            String addressRoad,
+            Long storeId,
+            String displayStatus
+    ) {
+        this.classId = classId;
+        this.reservationNumber = reservationNumber;
+        this.image = image;
+        this.status = status;
+        this.reservedTime = reservedTime;
+        this.classTitle = classTitle;
+        this.addressRoad = addressRoad;
+        this.storeId = storeId;
+        this.displayStatus = displayStatus;
+    };
 }
