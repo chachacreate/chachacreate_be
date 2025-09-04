@@ -4,77 +4,81 @@ import java.util.List;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.create.chacha.common.ApiResponse;
 import com.create.chacha.common.constants.ResponseCode;
+import com.create.chacha.common.util.JwtTokenProvider;
 import com.create.chacha.config.security.SecurityUser;
-import com.create.chacha.domains.seller.areas.settlement.dto.response.SettlementResponseDTO;
+import com.create.chacha.domains.seller.areas.settlement.dto.response.ClassDailySettlementResponseDTO;
+import com.create.chacha.domains.seller.areas.settlement.dto.response.ClassOptionResponseDTO;
+import com.create.chacha.domains.seller.areas.settlement.dto.response.StoreMonthlySettlementItemDTO;
 import com.create.chacha.domains.seller.areas.settlement.service.SellerSettlementService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 판매자 정산 조회 API
+ * 판매자 클래스 정산 API
  */
 @Slf4j
 @Validated
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/sellers/settlements")
+@RequestMapping("/api/seller/settlements/classes/{storeUrl}")
 public class SellerSettlementController {
 
-    private final SellerSettlementService settlementService;
+    private final SellerSettlementService service;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    // 테스트용
-    // 예) GET /api/sellers/{memberId}/settlements
-//    @GetMapping("/{memberId}/settlements")
-//    public ApiResponse<ResponseEntity<List<SettlementResponseDTO>>>  findByMemberIdForNow(
-//            @PathVariable("memberId") @NotNull Long memberId) {
-//
-//        log.debug("[GET] /api/sellers/{}/settlements (NO HEADER AUTH YET)", memberId);
-//        List<SettlementResponseDTO> result = settlementService.getSettlementsByMemberId(memberId);
-//        return new ApiResponse<>(ResponseCode.OK, ResponseEntity.ok(result));
-//    }
-
-    
-    // [향후 단계 - 헤더 인증 적용 버전]  ← 지금은 주석 유지
-    //
-    // - 헤더에 SecurityUser가 담겨 있고, securityUser.getUser().getId() 형태로
-    //   memberId를 얻을 수 있다고 가정한 코드.
-    // - 보안 연동 완료되면 위 findByMemberIdForNow()를 삭제/주석 처리하고
-    //   아래 메서드의 주석을 해제해 사용
-    //
-    // 예) GET /api/sellers/settlements
-    /**
-     * 로그인한 판매자의 정산 목록 조회
-     *
-     * @param principal SecurityUser (헤더 기반 인증 주입)
-     * @return ResponseEntity<ApiResponse<List<SettlementResponseDTO>>>
-     */
-    @GetMapping("/classes")
-    public ApiResponse<List<SettlementResponseDTO>> findMine(
-            @AuthenticationPrincipal SecurityUser principal,
-            @RequestParam(name = "classId", required = false) Long classId) {
-
-        if (principal == null || principal.getMemberId() == null) {
-            log.warn("인증 정보가 없습니다.");
-            return new ApiResponse<>(ResponseCode.UNAUTHORIZED, null);
-        }
-
-        Long memberId = principal.getMemberId();
-
-        List<SettlementResponseDTO> result = 
-        		(classId == null)
-        		? settlementService.getSettlementsByMemberId(memberId)	//전체 클래스 정산 조회
-        		: settlementService.getSettlementsByMemberAndClass(memberId, classId);		// 특정 클래스의 정산 조회
-
-        if (result == null || result.isEmpty()) {
-            return new ApiResponse<>(ResponseCode.SELLER_SETTLEMENT_NOT_FOUND, null);
-        }
-
-        return new ApiResponse<>(ResponseCode.SELLER_SETTLEMENT_FOUND, result);
+    /** 드롭다운: 스토어 내 클래스 목록 (id, name) */
+    @GetMapping("/class-list")
+    public ApiResponse<List<ClassOptionResponseDTO>> getClassOptions(
+            @PathVariable("storeUrl") String storeUrl
+    ) {
+        List<ClassOptionResponseDTO> list = service.getClassOptionsByStore(storeUrl);
+        if (list == null || list.isEmpty()) return new ApiResponse<>(ResponseCode.CLASSES_NOT_FOUND, null);
+        return new ApiResponse<>(ResponseCode.CLASSES_FOUND, list);
     }
 
-}       
+    /** 특정 클래스 정산 상세: 대표이미지 + (일자, 일별금액) + 클래스명 */
+    @GetMapping("/{classId}")
+    public ApiResponse<ClassDailySettlementResponseDTO> getClassDaily(
+            @PathVariable("storeUrl") String storeUrl,
+            @PathVariable("classId") Long classId
+    ) {
+        ClassDailySettlementResponseDTO dto = service.getDailySettlementByClass(storeUrl, classId);
+        if (dto == null) return new ApiResponse<>(ResponseCode.SELLER_SETTLEMENT_NOT_FOUND, null);
+        return new ApiResponse<>(ResponseCode.SELLER_SETTLEMENT_FOUND, dto);
+    }
+
+    /**
+     * 스토어 전체 클래스들의 월별 정산
+     */
+    
+    @GetMapping("/all")
+    public ApiResponse<List<StoreMonthlySettlementItemDTO>> getMonthly(
+            @AuthenticationPrincipal SecurityUser principal,
+            @PathVariable("storeUrl") String storeUrl,
+            HttpServletRequest request
+    ) {
+        // 헤더에서 토큰 추출
+        String authHeader = request.getHeader("Authorization");
+        String token = (authHeader != null && authHeader.startsWith("Bearer "))
+                ? authHeader.substring(7)
+                : null;
+        // JwtTokenProvider 인스턴스를 통해 이름 클레임 추출
+        String holderName = (token != null) ? jwtTokenProvider.getName(token) : null;
+        List<StoreMonthlySettlementItemDTO> rows = service.getMonthlySettlementsByStore(storeUrl, holderName);
+
+        if (rows == null || rows.isEmpty()) {
+            return new ApiResponse<>(ResponseCode.SELLER_SETTLEMENT_NOT_FOUND, null);
+        }
+        return new ApiResponse<>(ResponseCode.SELLER_SETTLEMENT_FOUND, rows);
+    }
+
+}
