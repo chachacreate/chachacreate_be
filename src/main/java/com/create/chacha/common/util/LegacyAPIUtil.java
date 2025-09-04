@@ -39,4 +39,17 @@ public class LegacyAPIUtil {
 
         return response.getBody().getData();
     }
+
+    public LegacyStoreDTO getLegacyStoreDataById(Long storeId) {
+        String url = "http://localhost:9999/legacy/info/store/id/" + storeId; // ID 기반 API 주소
+        ResponseEntity<LegacyResponse<LegacyStoreDTO>> response =
+                restTemplate.exchange(url,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<LegacyResponse<LegacyStoreDTO>>() {}
+                );
+
+        return response.getBody().getData();
+    }
+
 }
