@@ -86,6 +86,46 @@ public enum ResponseCode {
     RESUME_UPLOAD_SUCCESS(201, "판매자 이력 파일 업로드가 완료되었습니다."),
     RESUME_UPLOAD_FAIL(400, "판매자 이력 파일 업로드가 실패하였습니다"),
     
+	////seller (classes CRUD)
+	SELLER_CLASS_UPDATE_OK(200, "클래스가 성공적으로 수정되었습니다."),
+	SELLER_CLASS_FORM_FOUND(200, "클래스 수정 폼 조회 성공"),
+	SELLER_CLASS_FORM_NOT_FOUND(404, "클래스 수정 폼 대상을 찾을 수 없습니다."),
+	
+	SELLER_CLASS_TOGGLE_OK(200, "클래스 삭제/복구가 완료되었습니다."),
+	SELLER_CLASS_TOGGLE_PARTIAL(206, "일부 클래스만 삭제/복구에 성공했습니다."),
+	SELLER_CLASS_TOGGLE_NOT_FOUND(404, "삭제/복구 대상 클래스를 찾을 수 없습니다."),
+	SELLER_CLASS_TOGGLE_BAD_REQUEST(400, "클래스 ID 목록이 비어있습니다."),
+	
+	SELLER_CLASSES_FOUND(200, "스토어 클래스 목록 조회 성공"),
+	SELLER_CLASSES_NOT_FOUND(404, "스토어 클래스 목록이 없습니다."),
+	
+	SELLER_CLASS_CREATE_CREATED(201, "클래스가 성공적으로 생성되었습니다."),
+	SELLER_CLASS_CREATE_BAD_REQUEST(400, "클래스 생성 요청이 올바르지 않습니다."),
+	SELLER_CLASS_CREATE_PARTIAL(206, "일부 클래스만 생성되었습니다."),
+	
+	////seller (product price)
+	SELLER_PRICE_PREVIEW_OK(200, "상품 가격 추천(모의)에 성공했습니다."),
+	SELLER_PRICE_PREVIEW_BAD_REQUEST(400, "이미지 파일은 정확히 3개여야 합니다."),
+	SELLER_PRICE_PREVIEW_UNSUPPORTED(415, "이미지 파일만 업로드할 수 있습니다."),
+	SELLER_PRICE_PREVIEW_ERROR(500, "가격 추천 처리 중 오류가 발생했습니다."),
+	
+	////seller (reviews)
+	SELLER_REVIEW_STATS_FOUND(200, "리뷰 통계 조회 성공"),
+	SELLER_REVIEW_STATS_NOT_FOUND(404, "리뷰 통계를 찾을 수 없습니다."),
+	SELLER_PRODUCT_REVIEW_STATS_FOUND(200, "상품 리뷰 통계 조회 성공"),
+	SELLER_PRODUCT_REVIEW_STATS_NOT_FOUND(404, "상품 리뷰 통계를 찾을 수 없습니다."),
+	
+	SELLER_REVIEWS_FOUND(200, "리뷰 목록 조회 성공"),
+	SELLER_REVIEWS_NOT_FOUND(404, "리뷰가 없습니다."),
+	SELLER_PRODUCT_REVIEWS_FOUND(200, "상품 리뷰 목록 조회 성공"),
+	SELLER_PRODUCT_REVIEWS_NOT_FOUND(404, "해당 상품의 리뷰가 없습니다."),
+	
+	// seller (store custom)
+	SELLER_STORE_CUSTOM_FOUND(200, "스토어 커스텀 조회 성공"),
+	SELLER_STORE_CUSTOM_NOT_FOUND(404, "스토어 커스텀 설정이 없습니다."),
+	SELLER_STORE_CUSTOM_UPDATED(200, "스토어 커스텀 수정 성공"),
+	SELLER_STORE_CUSTOM_BAD_REQUEST(400, "스토어 커스텀 요청이 올바르지 않습니다."),
+
     CLASS_RESERVATIONS_FOUND(200, "클래스 예약 현황 조회 성공"),
     CLASS_RESERVATIONS_NOT_FOUND(404, "해당 클래스의 예약 내역이 없습니다."),
     CLASS_STATS_FOUND(200, "클래스 예약 통계 조회 성공"),

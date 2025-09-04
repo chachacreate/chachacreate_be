@@ -25,7 +25,16 @@ public class SellerStoreCustomController {
             @RequestBody StoreCustomUpdateRequestDTO request
     ) {
         StoreCustomGetResponseDTO body = sellerStoreCustomService.updateStoreCustom(storeUrl, request);
-        return ResponseEntity.ok(new ApiResponse<>(ResponseCode.OK, body));
+
+        if (body == null) {
+            return ResponseEntity
+                    .status(ResponseCode.SELLER_STORE_CUSTOM_NOT_FOUND.getStatus())
+                    .body(new ApiResponse<>(ResponseCode.SELLER_STORE_CUSTOM_NOT_FOUND, null));
+        }
+
+        return ResponseEntity
+                .status(ResponseCode.SELLER_STORE_CUSTOM_UPDATED.getStatus())
+                .body(new ApiResponse<>(ResponseCode.SELLER_STORE_CUSTOM_UPDATED, body));
     }
 
     // 스토어 커스텀 조회
@@ -34,6 +43,15 @@ public class SellerStoreCustomController {
             @PathVariable("storeUrl") String storeUrl
     ) {
         StoreCustomGetResponseDTO body = sellerStoreCustomService.getStoreCustom(storeUrl);
-        return ResponseEntity.ok(new ApiResponse<>(ResponseCode.OK, body));
+
+        if (body == null) {
+            return ResponseEntity
+                    .status(ResponseCode.SELLER_STORE_CUSTOM_NOT_FOUND.getStatus())
+                    .body(new ApiResponse<>(ResponseCode.SELLER_STORE_CUSTOM_NOT_FOUND, null));
+        }
+
+        return ResponseEntity
+                .status(ResponseCode.SELLER_STORE_CUSTOM_FOUND.getStatus())
+                .body(new ApiResponse<>(ResponseCode.SELLER_STORE_CUSTOM_FOUND, body));
     }
 }

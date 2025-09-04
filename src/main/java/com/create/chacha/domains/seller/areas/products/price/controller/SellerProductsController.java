@@ -34,7 +34,42 @@ public class SellerProductsController {
             @PathVariable("storeUrl") String storeUrl,
             @RequestPart("images") List<MultipartFile> images
     ) {
-        var body = sellerProductPriceService.previewPriceByFiles(storeUrl, images);
-        return ResponseEntity.ok(new ApiResponse<>(ResponseCode.OK, body));
+        // 1) 개수 검증 (정확히 3장)
+        if (images == null || images.size() != 3) {
+            return ResponseEntity
+                    .status(ResponseCode.SELLER_PRICE_PREVIEW_BAD_REQUEST.getStatus())
+                    .body(new ApiResponse<>(ResponseCode.SELLER_PRICE_PREVIEW_BAD_REQUEST, null));
+        }
+
+        // 2) 파일 유효성 검증 (빈 파일 X, image/* 만 허용)
+        for (MultipartFile f : images) {
+            if (f == null || f.isEmpty()) {
+                return ResponseEntity
+                        .status(ResponseCode.SELLER_PRICE_PREVIEW_BAD_REQUEST.getStatus())
+                        .body(new ApiResponse<>(ResponseCode.SELLER_PRICE_PREVIEW_BAD_REQUEST, null));
+            }
+            String ct = f.getContentType();
+            if (ct == null || !ct.toLowerCase().startsWith("image/")) {
+                return ResponseEntity
+                        .status(ResponseCode.SELLER_PRICE_PREVIEW_UNSUPPORTED.getStatus())
+                        .body(new ApiResponse<>(ResponseCode.SELLER_PRICE_PREVIEW_UNSUPPORTED, null));
+            }
+        }
+
+        // 3) 서비스 호출 (계산 전용)
+        ProductPriceRecommendSimpleResponseDTO body =
+                sellerProductPriceService.previewPriceByFiles(storeUrl, images);
+
+        if (body == null) {
+            // 서비스 내부에서 처리 중 오류가 난 경우 (null로 신호)
+            return ResponseEntity
+                    .status(ResponseCode.SELLER_PRICE_PREVIEW_ERROR.getStatus())
+                    .body(new ApiResponse<>(ResponseCode.SELLER_PRICE_PREVIEW_ERROR, null));
+        }
+
+        // 4) 성공
+        return ResponseEntity
+                .status(ResponseCode.SELLER_PRICE_PREVIEW_OK.getStatus())
+                .body(new ApiResponse<>(ResponseCode.SELLER_PRICE_PREVIEW_OK, body));
     }
 }

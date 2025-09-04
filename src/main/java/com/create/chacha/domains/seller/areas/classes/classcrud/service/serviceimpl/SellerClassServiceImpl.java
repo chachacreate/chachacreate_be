@@ -3,16 +3,17 @@ package com.create.chacha.domains.seller.areas.classes.classcrud.service.service
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.create.chacha.common.util.LegacyAPIUtil;
 import com.create.chacha.common.util.S3Uploader;
 import com.create.chacha.domains.seller.areas.classes.classcrud.dto.request.ClassCreateRequestDTO;
 import com.create.chacha.domains.seller.areas.classes.classcrud.dto.request.ClassUpdateRequestDTO;
@@ -22,14 +23,12 @@ import com.create.chacha.domains.seller.areas.classes.classcrud.dto.response.Cla
 import com.create.chacha.domains.seller.areas.classes.classcrud.dto.response.ClassUpdateResponseDTO;
 import com.create.chacha.domains.seller.areas.classes.classcrud.repository.ClassImageRepository;
 import com.create.chacha.domains.seller.areas.classes.classcrud.repository.SellerClassesRepository;
-import com.create.chacha.domains.seller.areas.classes.classcrud.repository.StoreRepository;
 import com.create.chacha.domains.seller.areas.classes.classcrud.service.SellerClassService;
 import com.create.chacha.domains.shared.constants.ImageStatusEnum;
 import com.create.chacha.domains.shared.entity.classcore.ClassImageEntity;
 import com.create.chacha.domains.shared.entity.classcore.ClassInfoEntity;
 import com.create.chacha.domains.shared.entity.store.StoreEntity;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,21 +39,40 @@ public class SellerClassServiceImpl implements SellerClassService {
 
     private final SellerClassesRepository classRepo;
     private final ClassImageRepository imageRepo;
-    private final StoreRepository storeRepo;
 
     private final S3Uploader s3Uploader;
+    private final LegacyAPIUtil legacyAPIUtil;
+
+    @PersistenceContext
+    private EntityManager em;
 
     private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter TIME_FMT     = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    // ===== 클래스 수정 (부분 교체 규칙 적용) =====
+    /** 레거시에서 storeId 얻기 (없으면 null) */
+    private Long getLegacyStoreId(String storeUrl) {
+        try {
+            var legacy = legacyAPIUtil.getLegacyStoreData(storeUrl);
+            if (legacy == null || legacy.getStoreId() == null) return null;
+            return legacy.getStoreId().longValue();
+        } catch (Exception e) {
+            log.warn("Legacy store 조회 실패: url={}, msg={}", storeUrl, e.getMessage());
+            return null;
+        }
+    }
+
+    // ===== 클래스 수정 =====
     @Override
     @Transactional
     public ClassUpdateResponseDTO updateClass(String storeUrl, Long classId, ClassUpdateRequestDTO req) {
-        ClassInfoEntity info = classRepo.findByIdAndStore_Url(classId, storeUrl)
-                .orElseThrow(() -> new IllegalArgumentException("해당 스토어에 속한 클래스가 없습니다. id=" + classId));
+        Long storeId = getLegacyStoreId(storeUrl);
+        if (storeId == null) return null;
 
-        // 본문 업데이트 (부분 수정 가능)
+        // 레포 시그니처에 맞춰 사용 (native query)
+        ClassInfoEntity info = classRepo.findByIdAndStore_Url(classId, storeId).orElse(null);
+        if (info == null) return null;
+
+        // 본문 업데이트 (부분 수정)
         var c = req.getClazz();
         if (c != null) {
             if (c.getTitle()        != null) info.setTitle(nvl(c.getTitle()));
@@ -76,18 +94,11 @@ public class SellerClassServiceImpl implements SellerClassService {
 
         int updatedThumb = 0, addedDesc = 0, deletedDesc = 0;
 
-        // ---------- 썸네일 부분 교체 ----------
-     // ---------- 썸네일 1장 교체 ----------
+        // 썸네일 1장 교체
         MultipartFile[] thumbs = req.getThumbnails();
         if (thumbs != null && thumbs.length > 0) {
-            // 유효한 첫 1장만 사용
-            MultipartFile f = java.util.Arrays.stream(thumbs)
-                    .filter(t -> t != null && !t.isEmpty())
-                    .findFirst()
-                    .orElse(null);
-
+            MultipartFile f = Arrays.stream(thumbs).filter(t -> t != null && !t.isEmpty()).findFirst().orElse(null);
             if (f != null) {
-                // 1) 새 업로드
                 String newOriginalKey;
                 try {
                     newOriginalKey = s3Uploader.uploadImage(f);
@@ -96,15 +107,10 @@ public class SellerClassServiceImpl implements SellerClassService {
                 }
                 String newThumbUrl = s3Uploader.getThumbnailUrl(newOriginalKey);
 
-                // 2) DB 교체 (THUMBNAIL, seq=1 고정)
                 ClassImageEntity entity = imageRepo
-                        .findByClassInfo_IdAndStatusAndImageSequence(
-                                info.getId(), ImageStatusEnum.THUMBNAIL, 1)
+                        .findByClassInfo_IdAndStatusAndImageSequence(info.getId(), ImageStatusEnum.THUMBNAIL, 1)
                         .orElseGet(() -> ClassImageEntity.builder()
-                                .classInfo(info)
-                                .status(ImageStatusEnum.THUMBNAIL)
-                                .imageSequence(1)
-                                .build());
+                                .classInfo(info).status(ImageStatusEnum.THUMBNAIL).imageSequence(1).build());
 
                 String oldUrl = entity.getUrl();
                 entity.setUrl(newThumbUrl);
@@ -113,40 +119,32 @@ public class SellerClassServiceImpl implements SellerClassService {
                 imageRepo.save(entity);
                 updatedThumb++;
 
-                // 3) 과거에 남아있을 수 있는 다른 썸네일(seq ≠ 1) 정리(논리삭제)
                 imageRepo.markThumbnailOthersDeleted(info.getId(), 1);
 
-                // 4) 이전 S3 파일 정리(베스트에포트)
                 if (oldUrl != null && !oldUrl.isBlank()) {
                     deleteS3PairByUrl(oldUrl);
                 }
             }
         }
 
-        // ---------- DESCRIPTION 부분 교체 ----------
+        // DESCRIPTION 부분 교체
         MultipartFile[] descFiles = req.getDescriptions();
-        Integer[] replaceSeqs    = req.getReplaceDescriptionSeqs();
-
+        Integer[] replaceSeqs     = req.getReplaceDescriptionSeqs();
         if (descFiles != null && descFiles.length > 0) {
             if (replaceSeqs == null || replaceSeqs.length != descFiles.length) {
+                // 컨트롤러에서 BAD_REQUEST로 처리하고 싶다면, 여기서 예외 대신 null 반환 규약으로 바꿔도 됨.
                 throw new IllegalArgumentException("replaceDescriptionSeqs 길이가 descriptions와 일치해야 합니다.");
             }
-            // 중복 체크
+
             Set<Integer> seen = new HashSet<>();
             for (Integer seq : replaceSeqs) {
-                if (seq == null || seq < 1) {
-                    throw new IllegalArgumentException("DESCRIPTION 교체 시퀀스는 1 이상의 정수여야 합니다. seq=" + seq);
-                }
-                if (!seen.add(seq)) {
-                    throw new IllegalArgumentException("DESCRIPTION 시퀀스에 중복이 있습니다. seq=" + seq);
-                }
+                if (seq == null || seq < 1) throw new IllegalArgumentException("DESCRIPTION 교체 seq는 1+ 이어야 합니다. seq=" + seq);
+                if (!seen.add(seq)) throw new IllegalArgumentException("DESCRIPTION seq 중복: " + seq);
             }
 
-            // 현재 활성 DESCRIPTION 캐시
-            List<ClassImageEntity> currentActive = imageRepo
-                    .findAllByClassInfo_IdAndStatusAndIsDeletedFalse(info.getId(), ImageStatusEnum.DESCRIPTION);
+            List<ClassImageEntity> currentActive =
+                    imageRepo.findAllByClassInfo_IdAndStatusAndIsDeletedFalse(info.getId(), ImageStatusEnum.DESCRIPTION);
 
-            // 다음 append 시퀀스
             int nextSeq = imageRepo
                     .findTopByClassInfo_IdAndStatusOrderByImageSequenceDesc(info.getId(), ImageStatusEnum.DESCRIPTION)
                     .map(ClassImageEntity::getImageSequence).orElse(0) + 1;
@@ -158,7 +156,6 @@ public class SellerClassServiceImpl implements SellerClassService {
                 Integer targetSeq = replaceSeqs[i];
                 if (f == null || f.isEmpty()) continue;
 
-                // 1) 새 이미지 S3 업로드
                 String newOriginalKey;
                 try {
                     newOriginalKey = s3Uploader.uploadImage(f);
@@ -167,15 +164,12 @@ public class SellerClassServiceImpl implements SellerClassService {
                 }
                 String newOriginalUrl = s3Uploader.getFullUrl(newOriginalKey);
 
-                // 2) 대상 seq 활성 레코드 찾기 (없을 수도 있음)
                 ClassImageEntity target = currentActive.stream()
-                        .filter(e -> e.getImageSequence() != null && e.getImageSequence().equals(targetSeq))
-                        .findFirst()
-                        .orElse(null);
+                        .filter(e -> Objects.equals(e.getImageSequence(), targetSeq))
+                        .findFirst().orElse(null);
 
                 String oldUrl = null;
                 if (target != null) {
-                    // 2-1) 대상 기존 레코드 논리삭제
                     oldUrl = target.getUrl();
                     target.setIsDeleted(true);
                     target.setDeletedAt(now);
@@ -183,18 +177,13 @@ public class SellerClassServiceImpl implements SellerClassService {
                     deletedDesc++;
                 }
 
-                // 3) 새 레코드 append (max+1)
                 ClassImageEntity add = ClassImageEntity.builder()
-                        .classInfo(info)
-                        .status(ImageStatusEnum.DESCRIPTION)
-                        .imageSequence(nextSeq++)
-                        .build();
+                        .classInfo(info).status(ImageStatusEnum.DESCRIPTION).imageSequence(nextSeq++).build();
                 add.setUrl(newOriginalUrl);
                 add.setIsDeleted(false);
                 imageRepo.save(add);
                 addedDesc++;
 
-                // 4) 이전 S3 실제 삭제(원본+썸네일) - best effort
                 if (oldUrl != null && !oldUrl.isBlank()) {
                     deleteS3PairByUrl(oldUrl);
                 }
@@ -209,12 +198,15 @@ public class SellerClassServiceImpl implements SellerClassService {
                 .build();
     }
 
-    // ===== 수정 폼 조회 (URL만 내려줌) =====
+    // ===== 수정 폼 조회 =====
     @Override
     @Transactional
     public ClassUpdateFormResponseDTO getClassForUpdate(String storeUrl, Long classId) {
-        ClassInfoEntity info = classRepo.findByIdAndStore_Url(classId, storeUrl)
-                .orElseThrow(() -> new IllegalArgumentException("해당 스토어에 속한 클래스가 없습니다. id=" + classId));
+        Long storeId = getLegacyStoreId(storeUrl);
+        if (storeId == null) return null;
+
+        ClassInfoEntity info = classRepo.findByIdAndStore_Url(classId, storeId).orElse(null);
+        if (info == null) return null;
 
         var core = new ClassUpdateFormResponseDTO.Core();
         core.setTitle(info.getTitle());
@@ -232,7 +224,6 @@ public class SellerClassServiceImpl implements SellerClassService {
         core.setEndTime(info.getEndTime() == null ? null : info.getEndTime().format(TIME_FMT));
         core.setTimeInterval(info.getTimeInterval());
 
-        // is_deleted = false 만, THUMBNAIL 먼저(1..), 그 다음 DESCRIPTION(1..)
         List<ClassImageEntity> images = imageRepo.findAllByClassInfo_IdAndIsDeletedFalse(info.getId());
         images.sort(Comparator
                 .comparing((ClassImageEntity e) -> e.getStatus() == ImageStatusEnum.THUMBNAIL ? 0 : 1)
@@ -240,7 +231,6 @@ public class SellerClassServiceImpl implements SellerClassService {
 
         List<ClassUpdateFormResponseDTO.ImageItem> thumbs = new ArrayList<>();
         List<ClassUpdateFormResponseDTO.ImageItem> descs  = new ArrayList<>();
-
         for (ClassImageEntity e : images) {
             var item = new ClassUpdateFormResponseDTO.ImageItem();
             item.setUrl(e.getUrl());
@@ -256,25 +246,17 @@ public class SellerClassServiceImpl implements SellerClassService {
         return dto;
     }
 
-    // ===== 클래스 논리적 삭제 토글 (S3는 유지) =====
+    // ===== 클래스 논리적 삭제 토글 =====
     @Override
     @Transactional
     public ClassDeletionToggleResponseDTO toggleClassesDeletion(String storeUrl, List<Long> classIds) {
-        if (classIds == null || classIds.isEmpty()) {
-            return ClassDeletionToggleResponseDTO.builder()
-                    .requestedCount(0)
-                    .toggledToDeletedCount(0)
-                    .toggledToRestoredCount(0)
-                    .toggledToDeletedIds(List.of())
-                    .toggledToRestoredIds(List.of())
-                    .notFoundOrMismatchedIds(List.of())
-                    .build();
-        }
+        if (classIds == null || classIds.isEmpty()) return null;
 
-        StoreEntity store = storeRepo.findByUrl(storeUrl)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 스토어: " + storeUrl));
+        Long storeId = getLegacyStoreId(storeUrl);
+        if (storeId == null) return null;
 
-        List<ClassInfoEntity> belongToStore = classRepo.findAllByIdInAndStore_Url(classIds, store.getUrl());
+        List<ClassInfoEntity> belongToStore = classRepo.findAllByIdInAndStore_Url(classIds, storeId);
+        if (belongToStore == null) belongToStore = List.of();
 
         Set<Long> foundSet = belongToStore.stream().map(ClassInfoEntity::getId).collect(Collectors.toSet());
         List<Long> notFoundOrMismatched = classIds.stream()
@@ -312,11 +294,13 @@ public class SellerClassServiceImpl implements SellerClassService {
     // ===== 클래스 리스트 조회 =====
     @Override
     public List<ClassListItemResponseDTO> getClassesByStoreUrl(String storeUrl) {
-        List<ClassInfoEntity> infos = classRepo.findAllByStore_Url(storeUrl);
+        Long storeId = getLegacyStoreId(storeUrl);
+        if (storeId == null) return List.of();
 
-        return infos.stream()
-                .map(this::toClassListItemResponseDTO)
-                .collect(Collectors.toList());
+        List<ClassInfoEntity> infos = classRepo.findAllByStore_Url(storeId);
+        if (infos == null || infos.isEmpty()) return List.of();
+
+        return infos.stream().map(this::toClassListItemResponseDTO).collect(Collectors.toList());
     }
 
     private ClassListItemResponseDTO toClassListItemResponseDTO(ClassInfoEntity info) {
@@ -357,21 +341,22 @@ public class SellerClassServiceImpl implements SellerClassService {
                 .build();
     }
 
-    // ===== 클래스 등록 (멀티파트 + S3) =====
+    // ===== 클래스 등록 =====
     @Override
     @Transactional
     public List<Long> createClasses(String storeUrl, List<ClassCreateRequestDTO> requests) {
-        StoreEntity store = storeRepo.findByUrl(storeUrl)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 스토어: " + storeUrl));
+        Long storeId = getLegacyStoreId(storeUrl);
+        if (storeId == null) return List.of();
 
+        StoreEntity storeRef = em.getReference(StoreEntity.class, storeId);
         List<Long> createdIds = new ArrayList<>();
 
         for (ClassCreateRequestDTO req : requests) {
             var c = req.getClazz();
-            if (c == null) throw new IllegalArgumentException("clazz(핵심 정보)는 필수입니다.");
+            if (c == null) return List.of();
 
             ClassInfoEntity classInfo = ClassInfoEntity.builder()
-                    .store(store)
+                    .store(storeRef)
                     .title(nvl(c.getTitle()))
                     .detail(nvl(c.getDetail()))
                     .price(c.getPrice())
@@ -393,10 +378,10 @@ public class SellerClassServiceImpl implements SellerClassService {
 
             List<ClassImageEntity> images = new ArrayList<>();
 
-            // === 썸네일: 1장 이상 ===
+            // 썸네일: 1장 이상
             MultipartFile[] thumbs = req.getThumbnails();
             if (thumbs == null || thumbs.length < 1) {
-                throw new IllegalArgumentException("썸네일 이미지는 최소 1장이어야 합니다.");
+                return List.of();
             }
             int thumbSeq = 1;
             for (MultipartFile f : thumbs) {
@@ -418,8 +403,8 @@ public class SellerClassServiceImpl implements SellerClassService {
                 }
             }
 
-            // === 설명 이미지는 '최종 HTML의 URL'만 저장 ===
-            int descSeq = 1; // ✅ 여기서 한 번만 선언
+            // 설명 이미지는 최종 HTML의 URL만 저장
+            int descSeq = 1;
             List<String> urlList = (c.getDetailImageUrls() == null) ? List.of() : c.getDetailImageUrls();
             for (String url : urlList) {
                 if (url == null || url.isBlank()) continue;
@@ -433,13 +418,13 @@ public class SellerClassServiceImpl implements SellerClassService {
                 images.add(e);
             }
 
-            // === 에디터 도중 올렸지만 최종 HTML에 없는 URL은 S3에서 삭제 ===
+            // 편집 중 업로드했지만 최종 HTML에 없는 URL은 S3에서 삭제
             List<String> uploaded = (c.getEditorUploadedUrls() == null) ? List.of() : c.getEditorUploadedUrls();
             if (!uploaded.isEmpty()) {
-                Set<String> finalSet = new HashSet<>();
-                for (String u : urlList) {
-                    if (u != null && !u.isBlank()) finalSet.add(u.trim());
-                }
+                Set<String> finalSet = urlList.stream()
+                        .filter(u -> u != null && !u.isBlank())
+                        .map(String::trim)
+                        .collect(Collectors.toSet());
                 for (String u : uploaded) {
                     if (u == null || u.isBlank()) continue;
                     if (!finalSet.contains(u.trim())) {
@@ -449,7 +434,6 @@ public class SellerClassServiceImpl implements SellerClassService {
             }
 
             if (!images.isEmpty()) imageRepo.saveAll(images);
-
             createdIds.add(saved.getId());
         }
         return createdIds;
@@ -469,43 +453,35 @@ public class SellerClassServiceImpl implements SellerClassService {
     }
 
     private String joinWithSpace(String... parts) {
-        return java.util.Arrays.stream(parts)
+        return Arrays.stream(parts)
                 .filter(p -> p != null && !p.isBlank())
                 .collect(Collectors.joining(" "));
     }
 
-    // ===== S3 삭제 보조 =====
-    /** URL -> S3 key 추출 (https://{bucket}.s3.amazonaws.com/...) */
     private String keyFromUrl(String url) {
         if (url == null) return null;
         String marker = ".s3.amazonaws.com/";
         int idx = url.indexOf(marker);
-        if (idx >= 0) {
-            return url.substring(idx + marker.length());
-        }
-        return url; // 이미 key만 들어온 경우
+        if (idx >= 0) return url.substring(idx + marker.length());
+        return url;
     }
 
-    /** 썸네일 key -> 원본 key */
     private String originalKeyFromThumbKey(String thumbKey) {
         if (thumbKey == null) return null;
         return thumbKey.replace("images/thumbnail/", "images/original/")
-                .replace("_thumb.webp", ".webp");
+                       .replace("_thumb.webp", ".webp");
     }
 
-    /** 원본 key -> 썸네일 key */
     private String thumbKeyFromOriginalKey(String originalKey) {
         if (originalKey == null) return null;
-        String fileName = originalKey.substring(originalKey.lastIndexOf('/') + 1); // abc.webp
-        String base = fileName.replace(".webp", ""); // abc
+        String fileName = originalKey.substring(originalKey.lastIndexOf('/') + 1);
+        String base = fileName.replace(".webp", "");
         return "images/thumbnail/" + base + "_thumb.webp";
     }
 
-    /** URL 기준으로 원본/썸네일 한 쌍을 모두 삭제 */
     private void deleteS3PairByUrl(String url) {
         String key = keyFromUrl(url);
         if (key == null || key.isBlank()) return;
-
         try {
             if (key.startsWith("images/thumbnail/")) {
                 String originalKey = originalKeyFromThumbKey(key);
