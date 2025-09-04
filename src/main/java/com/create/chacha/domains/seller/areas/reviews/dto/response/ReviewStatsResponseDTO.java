@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class ReviewStatsResponseDTO {
-    private long totalReviews;                                 // 전체 리뷰 수
+    private Long totalReviews;                                 // 전체 리뷰 수
     private List<ReviewStatsBucketResponseDTO> buckets;        // 0.0 -> 5.0 오름차순 11개
 }
