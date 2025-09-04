@@ -1,4 +1,4 @@
-package com.create.chacha.domains.shared.member.service;
+package com.create.chacha.common.util.legacy.service;
 
 import com.create.chacha.domains.shared.entity.member.MemberAddressEntity;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;

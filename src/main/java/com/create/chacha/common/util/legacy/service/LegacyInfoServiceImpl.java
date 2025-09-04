@@ -1,8 +1,7 @@
-package com.create.chacha.domains.shared.member.serviceimpl;
+package com.create.chacha.common.util.legacy.service;
 
 import com.create.chacha.domains.shared.entity.member.MemberAddressEntity;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
-import com.create.chacha.domains.shared.member.service.LegacyInfoService;
 import com.create.chacha.domains.shared.repository.MemberAddressRepository;
 import com.create.chacha.domains.shared.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
