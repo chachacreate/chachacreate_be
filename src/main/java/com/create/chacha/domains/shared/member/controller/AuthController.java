@@ -57,6 +57,33 @@ public class AuthController {
         return new ApiResponse<>(ResponseCode.LOGIN_SUCCESS, responseDTO);
     }
 
+    @PostMapping("/socialLogin")
+    public ApiResponse<TokenResponseDTO> socailLogin(@RequestBody String email, HttpServletResponse response) {
+        log.info("로그인 요청: {}", email);
+
+        TokenResponseDTO tokenDTO = authService.socialLogin(email);
+
+        // RefreshToken 쿠키 등록
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenDTO.getRefreshToken())
+                .httpOnly(true)
+                .secure(true)              // HTTPS 사용 시 true 권장
+                .path("/")                 // 모든 경로에서 접근 가능
+                .maxAge(7 * 24 * 60 * 60)  // 7일
+                .sameSite("None")        // CSRF 방어(Strict), 서로 다른 포트/도메인 간 쿠키 전송(None)
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
+
+        // AccessToken만 반환 (RefreshToken은 쿠키로 설정했으므로 null)
+        MemberEntity loginMember = MemberEntity.builder()
+                .id(tokenDTO.getLogin().getId())
+                .email(email)
+                .name(tokenDTO.getLogin().getName())
+                .phone(tokenDTO.getLogin().getPhone())
+                .build();
+        TokenResponseDTO responseDTO = new TokenResponseDTO(loginMember, tokenDTO.getAccessToken(), null);
+        return new ApiResponse<>(ResponseCode.LOGIN_SUCCESS, responseDTO);
+    }
+
     @PostMapping("/logout")
     public ApiResponse<Void> logout(String email, @RequestHeader("Authorization") String authHeader, HttpServletResponse response) {
         String accessToken = authHeader.substring(7);

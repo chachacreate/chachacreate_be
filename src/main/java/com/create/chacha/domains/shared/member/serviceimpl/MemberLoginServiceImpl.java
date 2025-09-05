@@ -55,6 +55,33 @@ public class MemberLoginServiceImpl implements MemberLoginService {
     }
 
     @Override
+    public TokenResponseDTO socialLogin(String email) {
+        MemberEntity member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자"));
+
+        String accessToken = jwtTokenProvider.createAccessToken(
+                member.getId(),
+                member.getEmail(),
+                member.getName(),
+                member.getPhone(),
+                member.getMemberRole()
+        );
+        String refreshToken = jwtTokenProvider.createRefreshToken(
+                member.getId(),
+                member.getEmail(),
+                member.getName(),
+                member.getPhone(),
+                member.getMemberRole()
+        );
+
+        // Redis에 RefreshToken 저장
+        redisTemplate.opsForValue().set("RT:" + email, refreshToken,
+                jwtTokenProvider.getExpiration(refreshToken), TimeUnit.MILLISECONDS);
+
+        return new TokenResponseDTO(member, accessToken, refreshToken);
+    }
+
+    @Override
     public void logout(String email, String accessToken) {
         // RefreshToken 삭제
         redisTemplate.delete("RT:" + email);
