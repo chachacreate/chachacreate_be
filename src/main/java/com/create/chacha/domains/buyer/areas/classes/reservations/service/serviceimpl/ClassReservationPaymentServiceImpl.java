@@ -6,9 +6,9 @@ import com.create.chacha.domains.buyer.areas.classes.reservations.dto.request.Cl
 import com.create.chacha.domains.buyer.areas.classes.reservations.dto.response.ClassReservationCompleteResponseDTO;
 import com.create.chacha.domains.buyer.areas.classes.reservations.repository.ClassReservationPaymentRepository;
 import com.create.chacha.domains.buyer.areas.classes.reservations.service.ClassReservationPaymentService;
-import com.create.chacha.domains.buyer.exception.PaymentFailedException;
-import com.create.chacha.domains.buyer.exception.PaymentRequestException;
-import com.create.chacha.domains.buyer.exception.ReservationException;
+import com.create.chacha.domains.buyer.exception.payment.PaymentFailedException;
+import com.create.chacha.domains.buyer.exception.payment.PaymentRequestException;
+import com.create.chacha.domains.buyer.exception.classes.ReservationException;
 import com.create.chacha.domains.shared.constants.OrderAndReservationStatusEnum;
 import com.create.chacha.domains.shared.entity.classcore.ClassInfoEntity;
 import com.create.chacha.domains.shared.entity.classcore.ClassReservationEntity;
