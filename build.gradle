@@ -4,6 +4,17 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
+//// gradle build 시 약관 동의 여부 동의한다 설정
+//// Publishing a build scan to scans.gradle.com requires accepting the Gradle Terms of Use defined at https://gradle.com/help/legal-terms-of-use. Do you accept these terms? [yes, no]
+//// 위 내용 나올때(프로젝트 import 시 build에서 멈출 때)만 주석 해제 해서 실행
+
+//gradleEnterprise {
+//    buildScan {
+//        termsOfServiceUrl = "https://gradle.com/terms-of-service"
+//        termsOfServiceAgree = "yes"
+//    }
+//}
+
 group = 'com.create'
 version = '0.0.1-SNAPSHOT'
 description = 'chachacreate'
