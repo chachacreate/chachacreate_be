@@ -3,10 +3,10 @@ package com.create.chacha.config.exception;
 import com.create.chacha.common.ApiResponse;
 import com.create.chacha.common.constants.ResponseCode;
 import com.create.chacha.common.exception.DatabaseException;
-import com.create.chacha.domains.buyer.exception.PaymentFailedException;
-import com.create.chacha.domains.buyer.exception.PaymentRequestException;
-import com.create.chacha.domains.buyer.exception.ReservationException;
-import com.create.chacha.domains.buyer.exception.ReservationSaveException;
+import com.create.chacha.domains.buyer.exception.*;
+import com.create.chacha.domains.buyer.exception.mypage.MemberUpdateException;
+import com.create.chacha.domains.buyer.exception.mypage.PasswordMismatchException;
+import com.create.chacha.domains.buyer.exception.mypage.PasswordValidationException;
 import com.create.chacha.domains.seller.areas.resumes.exception.ResumeUploadException;
 import com.create.chacha.domains.shared.member.exception.*;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +53,26 @@ public class GlobalExceptionHandler {
         log.error("데이터베이스 오류: {}", e.getMessage());
         return new ApiResponse<>(ResponseCode.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
     }
+
+    // 마이페이지
+    @ExceptionHandler(PasswordValidationException.class)
+    public ApiResponse<String> handleInvalidPassword(PasswordValidationException e) {
+        log.warn("비밀번호 정책 위반: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.PASSWORD_INVALID, e.getMessage());
+    }
+
+    @ExceptionHandler(PasswordMismatchException.class)
+    public ApiResponse<String> handlePasswordMismatch(PasswordMismatchException e) {
+        log.warn("비밀번호 불일치: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.PASSWORD_MISMATCH, e.getMessage());
+    }
+
+    @ExceptionHandler(MemberUpdateException.class)
+    public ApiResponse<String> handleMemberUpdateFail(MemberUpdateException e) {
+        log.warn("회원 정보 수정 실패: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.MEMBER_UPDATE_FAIL, e.getMessage());
+    }
+
 
     // 결제/예약 관련 예외 처리
     @ExceptionHandler(PaymentFailedException.class)
