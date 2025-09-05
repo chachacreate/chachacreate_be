@@ -25,7 +25,7 @@ public class ChangePasswordController {
                                                 request.getNewPassword(), request.getNewPasswordConfirm()
         );
 
-        return new ApiResponse<>(ResponseCode.OK, "비밀 번호 변경이 완료되었습니다.");
+        return new ApiResponse<>(ResponseCode.PASSWORD_CHANGE_OK, "비밀번호 변경이 완료되었습니다.");
     }
 
 }

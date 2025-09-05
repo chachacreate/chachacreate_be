@@ -1,8 +1,7 @@
 package com.create.chacha.domains.buyer.areas.mypage.service.serviceImpl;
 
-import com.create.chacha.common.ApiResponse;
-import com.create.chacha.common.constants.ResponseCode;
 import com.create.chacha.domains.buyer.areas.mypage.service.ChangePasswordService;
+import com.create.chacha.domains.buyer.exception.mypage.PasswordValidationException;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
 import com.create.chacha.domains.shared.repository.MemberRepository;
 import jakarta.transaction.Transactional;
@@ -55,21 +54,21 @@ public class ChangePasswordServiceImpl implements ChangePasswordService {
 
     private void validatePassword(String password) {
         if (password.length() < 8) {
-            throw new IllegalArgumentException("비밀번호는 최소 8자 이상이어야 합니다.");
+            throw new PasswordValidationException("비밀번호는 최소 8자 이상이어야 합니다.");
         }
         if (!password.matches(".*[A-Za-z].*")) {
-            throw new IllegalArgumentException("비밀번호에는 최소 1개의 영어가 포함되어야 합니다.");
+            throw new PasswordValidationException("비밀번호에는 최소 1개의 영어가 포함되어야 합니다.");
         }
         if (!password.matches(".*\\d.*")) {
-            throw new IllegalArgumentException("비밀번호에는 최소 1개의 숫자가 포함되어야 합니다.");
+            throw new PasswordValidationException("비밀번호에는 최소 1개의 숫자가 포함되어야 합니다.");
         }
         String specialPattern = ".*[" + Pattern.quote(ALLOWED_SPECIAL) + "].*";
         if (!password.matches(specialPattern)) {
-            throw new IllegalArgumentException("비밀번호에는 최소 1개의 특수문자가 포함되어야 합니다.");
+            throw new PasswordValidationException("비밀번호에는 최소 1개의 특수문자가 포함되어야 합니다.");
         }
         String notAllowedPattern = "[^A-Za-z\\d" + Pattern.quote(ALLOWED_SPECIAL) + "]";
         if (password.matches(".*" + notAllowedPattern + ".*")) {
-            throw new IllegalArgumentException("비밀번호에 허용되지 않은 문자가 포함되어 있습니다.");
+            throw new PasswordValidationException("비밀번호에 허용되지 않은 문자가 포함되어 있습니다.");
         }
     }
 }
