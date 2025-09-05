@@ -10,48 +10,44 @@ import java.util.List;
 
 public interface ClassReservationStatsRepository extends JpaRepository<ClassReservationEntity, String> {
 
-    interface BucketCountProjection {
-        Integer getBucket(); // 시간(0~23) 또는 요일(1~7; MySQL DAYOFWEEK)
+	interface BucketCountProjection {
+        Integer getBucket();
         Long getCnt();
     }
 
-    /** 시간별 집계 */
     @Query(value = """
-    	    SELECT HOUR(cr.reserved_time) AS bucket, COUNT(*) AS cnt
-    	    FROM class_reservation cr
-    	    JOIN class_info ci ON cr.class_info_id = ci.id
-    	    JOIN store s       ON ci.store_id = s.id
-    	    WHERE s.url = :storeUrl
-    	      AND cr.status = 'ORDER_OK'
-    	      AND cr.reserved_time >= :start
-    	      AND cr.reserved_time <  :end
-    	      AND (ci.id = COALESCE(:classInfoId, ci.id))  -- ← 변경
-    	    GROUP BY HOUR(cr.reserved_time)
-    	    ORDER BY bucket
-    	    """, nativeQuery = true)
-    List<BucketCountProjection> countByHourForStore(
-            @Param("storeUrl") String storeUrl,
+        SELECT HOUR(cr.reserved_time) AS bucket, COUNT(*) AS cnt
+          FROM class_reservation cr
+          JOIN class_info ci ON cr.class_info_id = ci.id
+         WHERE ci.store_id = :storeId
+           AND cr.status = 'ORDER_OK'
+           AND cr.reserved_time >= :start
+           AND cr.reserved_time <  :end
+           AND (:classInfoId IS NULL OR ci.id = :classInfoId)
+         GROUP BY HOUR(cr.reserved_time)
+         ORDER BY bucket
+        """, nativeQuery = true)
+    List<BucketCountProjection> countByHourForStoreId(
+            @Param("storeId") Long storeId,                  // ← Long으로 변경
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end,
-            @Param("classInfoId") Integer classInfoId
+            @Param("classInfoId") Integer classInfoId        // class_info.id 타입에 맞춰 유지/변경
     );
 
-    /** 요일별 집계 (1=일 ~ 7=토) */
     @Query(value = """
-    	    SELECT DAYOFWEEK(cr.reserved_time) AS bucket, COUNT(*) AS cnt
-    	    FROM class_reservation cr
-    	    JOIN class_info ci ON cr.class_info_id = ci.id
-    	    JOIN store s       ON ci.store_id = s.id
-    	    WHERE s.url = :storeUrl
-    	      AND cr.status = 'ORDER_OK'
-    	      AND cr.reserved_time >= :start
-    	      AND cr.reserved_time <  :end
-    	      AND (ci.id = COALESCE(:classInfoId, ci.id))  -- ← 변경
-    	    GROUP BY DAYOFWEEK(cr.reserved_time)
-    	    ORDER BY bucket
-    	    """, nativeQuery = true)
-    List<BucketCountProjection> countByWeekdayForStore(
-            @Param("storeUrl") String storeUrl,
+        SELECT DAYOFWEEK(cr.reserved_time) AS bucket, COUNT(*) AS cnt
+          FROM class_reservation cr
+          JOIN class_info ci ON cr.class_info_id = ci.id
+         WHERE ci.store_id = :storeId
+           AND cr.status = 'ORDER_OK'
+           AND cr.reserved_time >= :start
+           AND cr.reserved_time <  :end
+           AND (:classInfoId IS NULL OR ci.id = :classInfoId)
+         GROUP BY DAYOFWEEK(cr.reserved_time)
+         ORDER BY bucket
+        """, nativeQuery = true)
+    List<BucketCountProjection> countByWeekdayForStoreId(
+            @Param("storeId") Long storeId,                  // ← Long으로 변경
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end,
             @Param("classInfoId") Integer classInfoId
