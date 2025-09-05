@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Component
 public class LegacyAPIUtil {
     private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper = new ObjectMapper(); // 재사용
 
     public LegacyStoreDTO getLegacyStoreData(String storeUrl) {
         String url = "http://localhost:9999/legacy/info/store/" + storeUrl; // legacy API 주소
@@ -47,15 +48,25 @@ public class LegacyAPIUtil {
     }
 
     public LegacyStoreDTO getLegacyStoreDataById(Long storeId) {
-        String url = "http://localhost:9999/legacy/info/store/id/" + storeId; // ID 기반 API 주소
-        ResponseEntity<LegacyResponse<LegacyStoreDTO>> response =
-                restTemplate.exchange(url,
-                        HttpMethod.GET,
-                        null,
-                        new ParameterizedTypeReference<LegacyResponse<LegacyStoreDTO>>() {}
-                );
+        String url = "http://localhost:9999/legacy/info/store/id/" + storeId;
 
-        return response.getBody().getData();
+        ResponseEntity<String> response =
+                restTemplate.exchange(url, HttpMethod.GET, null, String.class);
+
+        String body = response.getBody();
+        if (body == null || body.isBlank()) return null;
+
+        try {
+            LegacyResponse<LegacyStoreDTO> wrapped =
+                objectMapper.readValue(body, new TypeReference<LegacyResponse<LegacyStoreDTO>>() {});
+            if (wrapped != null && wrapped.getData() != null) return wrapped.getData();
+        } catch (Exception ignore) {}
+
+        try {
+            return objectMapper.readValue(body, LegacyStoreDTO.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
     
     public List<LegacyOrderStatusResponseDTO> getLegacyStatusList(String storeUrl) {

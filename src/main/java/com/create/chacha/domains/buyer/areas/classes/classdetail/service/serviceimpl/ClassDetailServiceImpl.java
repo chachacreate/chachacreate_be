@@ -10,15 +10,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.create.chacha.common.util.LegacyAPIUtil;
 import com.create.chacha.domains.buyer.areas.classes.classdetail.dto.response.ClassImagesResponseDTO;
 import com.create.chacha.domains.buyer.areas.classes.classdetail.dto.response.ClassScheduleResponseDTO;
 import com.create.chacha.domains.buyer.areas.classes.classdetail.dto.response.ClassSummaryResponseDTO;
 import com.create.chacha.domains.buyer.areas.classes.classdetail.service.ClassDetailService;
 import com.create.chacha.domains.buyer.areas.classes.classlist.repository.ClassInfoRepository;
 import com.create.chacha.domains.seller.areas.classes.classcrud.repository.ClassImageRepository;
-import com.create.chacha.domains.seller.areas.classes.classcrud.repository.StoreRepository;
 import com.create.chacha.domains.shared.entity.classcore.ClassInfoEntity;
-import com.create.chacha.domains.shared.entity.store.StoreEntity;
 import com.create.chacha.domains.shared.repository.ClassScheduleRepository;
 
 import lombok.RequiredArgsConstructor;;
@@ -28,9 +27,10 @@ import lombok.RequiredArgsConstructor;;
 public class ClassDetailServiceImpl implements ClassDetailService {
 
     private final ClassInfoRepository classInfoRepository;
-    private final StoreRepository storeRepository;
     private final ClassImageRepository classImageRepository;
     private final ClassScheduleRepository classScheduleRepository;
+    
+    private final LegacyAPIUtil legacyAPIUtil;
 
     /**
      * 프론트로 내보낼 이미지 도메인(CDN 또는 S3 퍼블릭 도메인)
@@ -42,11 +42,31 @@ public class ClassDetailServiceImpl implements ClassDetailService {
 
     @Override
     public ClassSummaryResponseDTO getSummary(Long classId) {
-        ClassInfoEntity ci = classInfoRepository.findByClassId(classId)
-                .orElseThrow(() -> new NoSuchElementException("클래스를 찾을 수 없습니다: " + classId));
+    	ClassInfoEntity ci = classInfoRepository.findById(classId)   // JpaRepository 기본 메서드
+    		    .orElseThrow(() -> new NoSuchElementException("클래스를 찾을 수 없습니다: " + classId));
 
-        StoreEntity store = storeRepository.findById(ci.getStore().getId())
-                .orElseThrow(() -> new NoSuchElementException("스토어를 찾을 수 없습니다: " + ci.getStore().getId()));
+        // ⚠️ StoreEntity 전체를 로딩하지 않고, FK(id)만 안전하게 꺼냄
+        Long storeId = null;
+        if (ci.getStore() != null) {
+            // Hibernate 프록시여도 getId() 호출은 추가 로딩 없이 동작(테이블 접근 안 함)
+            storeId = ci.getStore().getId();
+        }
+
+        // 레거시에서 스토어 정보 조회 (DB의 store 테이블이 없어도 OK)
+        String storeName = null;
+        String storeContent = null;
+        try {
+            if (storeId != null) {
+                var legacyStore = legacyAPIUtil.getLegacyStoreDataById(storeId);
+                if (legacyStore != null) {
+                    storeName = legacyStore.getStoreName();
+                    storeContent = legacyStore.getStoreDetail();
+                }
+            }
+        } catch (Exception e) {
+            // 레거시 연동 실패해도 요약 자체는 내려가게만 함 (필요시 warn 로그)
+            // log.warn("레거시 스토어 조회 실패 storeId={}", storeId, e);
+        }
 
         return ClassSummaryResponseDTO.builder()
                 .classId(ci.getId())
@@ -58,11 +78,12 @@ public class ClassDetailServiceImpl implements ClassDetailService {
                 .addressRoad(ci.getAddressRoad())
                 .addressDetail(ci.getAddressDetail())
                 .addressExtra(ci.getAddressExtra())
-                .storeId(store.getId())
-                .storeName(store.getName())
-                .storeContent(store.getContent())
+                .storeId(storeId)           // ← FK 그대로 사용(Long)
+                .storeName(storeName)       // ← 레거시에서 채움(없으면 null)
+                .storeContent(storeContent) // ← 레거시에서 채움(없으면 null)
                 .build();
     }
+
 
     /**
      * ✅ 이 메서드만 수정하면 된다.
