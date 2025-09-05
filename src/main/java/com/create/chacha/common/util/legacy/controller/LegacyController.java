@@ -51,5 +51,14 @@ public class LegacyController {
             return new ApiResponse<>(ResponseCode.NOT_FOUND, null);
         }
     }
+    @GetMapping("/info/memberEmail/{memberEmail}")
+    public ApiResponse<MemberEntity> sendMemberEntityByMemberId(@PathVariable String memberEmail){
+        try {
+            MemberEntity memberEntity = legacyInfoService.getMemberByEmail(memberEmail);
+            return new ApiResponse<>(ResponseCode.OK, memberEntity);
+        } catch (MemberNotFoundException e) {
+            return new ApiResponse<>(ResponseCode.NOT_FOUND, null);
+        }
+    }
 
 }

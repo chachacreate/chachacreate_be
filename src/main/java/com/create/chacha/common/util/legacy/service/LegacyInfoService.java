@@ -8,4 +8,5 @@ public interface LegacyInfoService {
     public MemberEntity getSellerInfo(Integer memberId);
     public MemberAddressEntity getMemberAddress(Integer memberId);
     public MemberAddressEntity getMemberAddressByAddressId(Integer addressId);
+    public MemberEntity getMemberByEmail(String memberEmail);
 }

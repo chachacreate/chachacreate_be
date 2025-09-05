@@ -54,4 +54,22 @@ public class LegacyInfoServiceImpl implements LegacyInfoService {
         });
         return responseMemberAddress;
     }
+
+    @Override
+    public MemberEntity getMemberByEmail(String memberEmail) {
+        MemberEntity responseMember = new MemberEntity();
+        memberRepository.findByEmail(memberEmail).ifPresent(member -> {
+            responseMember.setName(member.getName());
+            responseMember.setEmail(member.getEmail());
+            responseMember.setPhone(member.getPhone());
+            responseMember.setId(member.getId());
+            responseMember.setMemberRole(member.getMemberRole());
+            responseMember.setRegistrationNumber(member.getRegistrationNumber());
+            responseMember.setCreatedAt(member.getCreatedAt());
+            responseMember.setUpdatedAt(member.getUpdatedAt());
+            responseMember.setDeletedAt(member.getDeletedAt());
+            responseMember.setIsDeleted(member.getIsDeleted());
+        });
+        return responseMember;
+    }
 }
