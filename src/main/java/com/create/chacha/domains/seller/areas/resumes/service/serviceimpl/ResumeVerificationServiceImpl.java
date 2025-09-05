@@ -1,7 +1,8 @@
 package com.create.chacha.domains.seller.areas.resumes.service.serviceimpl;
 
+import com.create.chacha.common.util.LegacyAPIUtil;
 import com.create.chacha.common.util.S3Uploader;
-import com.create.chacha.domains.seller.areas.classes.classcrud.repository.StoreRepository;
+import com.create.chacha.common.util.dto.LegacyStoreDTO;
 import com.create.chacha.domains.seller.areas.resumes.dto.request.ResumeImageDTO;
 import com.create.chacha.domains.seller.areas.resumes.dto.request.ResumeRequestDTO;
 import com.create.chacha.domains.seller.areas.resumes.dto.response.ResumeImageResponseDTO;
@@ -10,6 +11,7 @@ import com.create.chacha.domains.seller.areas.resumes.exception.ResumeUploadExce
 import com.create.chacha.domains.seller.areas.resumes.repository.ResumeImageRepository;
 import com.create.chacha.domains.seller.areas.resumes.repository.StoreResumeRepository;
 import com.create.chacha.domains.seller.areas.resumes.service.ResumeVerificationService;
+import com.create.chacha.domains.seller.areas.settlement.dto.response.ClassOptionResponseDTO;
 import com.create.chacha.domains.shared.constants.AcceptStatusEnum;
 import com.create.chacha.domains.shared.entity.store.ResumeImageEntity;
 import com.create.chacha.domains.shared.entity.store.StoreEntity;
@@ -28,20 +30,28 @@ public class ResumeVerificationServiceImpl implements ResumeVerificationService 
 
     private final StoreResumeRepository resumeRepository;
     private final ResumeImageRepository imageRepository;
-    private final StoreRepository storeRepository; // storeUrl → storeId 조회용
     private final S3Uploader s3Uploader;
-
+    private final LegacyAPIUtil legacyAPI;
+    
     @Override
     @Transactional
     public ResumeResponseDTO createResume(String storeUrl, ResumeRequestDTO request) {
         try {
             // 1. store 조회
-            StoreEntity store = storeRepository.findByUrl(storeUrl)
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 스토어 URL"));
+        	LegacyStoreDTO legacyStore = legacyAPI.getLegacyStoreData(storeUrl);
+            if (legacyStore == null || legacyStore.getStoreId() == null) {
+                throw new ResumeUploadException("해당 스토어 정보를 찾을 수 없습니다.", null);
+            }
+            Long storeId = legacyStore.getStoreId().longValue();
 
+            
+            StoreEntity storeEntity = new StoreEntity();
+            storeEntity.setId(storeId);
+            
             // 2. StoreResumeEntity 생성
             StoreResumeEntity resume = new StoreResumeEntity();
-            resume.setStore(store);
+            resume.setStore(storeEntity);
+            resume.setStatus(AcceptStatusEnum.PENDING);
             resumeRepository.save(resume);
 
             // 3. 이미지 업로드 & ResumeImageEntity 저장
@@ -79,4 +89,16 @@ public class ResumeVerificationServiceImpl implements ResumeVerificationService 
             throw new ResumeUploadException("이력 인증 중 오류가 발생했습니다.", e);
         }
     }
+
+	@Override
+	public ClassOptionResponseDTO getPrefill(String storeUrl) {
+		LegacyStoreDTO legacyStore = legacyAPI.getLegacyStoreData(storeUrl);
+        if (legacyStore == null || legacyStore.getStoreId() == null) {
+        	throw new ResumeUploadException("해당url의 스토어 이름 조회 실패.", null);
+        }
+        return ClassOptionResponseDTO.builder()
+                .id(legacyStore.getStoreId().longValue())
+                .name(legacyStore.getStoreName()) 
+                .build();
+	}
 }
