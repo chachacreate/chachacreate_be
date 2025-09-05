@@ -137,6 +137,13 @@ public enum ResponseCode {
     SELLER_RESERVATION_STATS_BAD_SCOPE(400, "scope=class 인 경우 classId가 필요합니다."),
     SELLER_RESERVATION_GROUPBY_INVALID(400, "groupBy/dimension 값이 올바르지 않습니다."),
 
+
+    // mypage
+    PASSWORD_CHANGE_OK(200, "비밀번호 변경이 완료되었습니다."),
+    PASSWORD_INVALID(400, "비밀번호가 조건에 맞지 않습니다."),
+    PASSWORD_MISMATCH(400, "비밀번호가 일치하지 않습니다."),
+    MEMBER_UPDATE_FAIL(400, "회원 정보 수정에 실패했습니다."),
+
     //// login & message
     // message
 
