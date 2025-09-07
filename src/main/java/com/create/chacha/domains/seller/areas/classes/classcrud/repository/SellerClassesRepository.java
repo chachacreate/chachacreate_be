@@ -24,12 +24,12 @@ public interface SellerClassesRepository extends CrudRepository<ClassInfoEntity,
 	
 	// 클래스 조회 store.storeUrl = ? (삭제/미삭제 모두, 최신순)
 	@Query(value = """
-	        select *
-	          from class_info
-	         where store_id = :storeId
-	         order by updated_at desc
-	        """, nativeQuery = true)
-	List<ClassInfoEntity> findAllByStore_Url(@Param("storeId") Long storeId);
+		    SELECT *
+		    FROM class_info
+		    WHERE store_id = :storeId
+		    ORDER BY is_deleted ASC, updated_at DESC
+		    """, nativeQuery = true)
+		List<ClassInfoEntity> findAllByStore_Url(@Param("storeId") Long storeId);
     
     // 클래스 논리적 삭제 구현: 스토어 URL과 ID 리스트로 소속된 클래스들 조회 (삭제/미삭제 모두 포함)
 	@Query(value = """
