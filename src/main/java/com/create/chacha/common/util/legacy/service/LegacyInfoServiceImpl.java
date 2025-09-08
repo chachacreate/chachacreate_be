@@ -7,6 +7,8 @@ import com.create.chacha.domains.shared.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class LegacyInfoServiceImpl implements LegacyInfoService {
@@ -41,6 +43,34 @@ public class LegacyInfoServiceImpl implements LegacyInfoService {
         });
         return responseMemberAddress;
     }
+
+    @Override
+    public MemberAddressEntity setMemberAddress(Integer memberId, MemberAddressEntity addr) {
+        MemberEntity member = memberRepository.findById(memberId.longValue())
+                .orElseThrow(() -> new RuntimeException("회원 정보가 없습니다."));
+        addr.setMember(member);
+
+        // NOT NULL 필드 기본값 보장
+        if (addr.getIsDeleted() == null) {
+            addr.setIsDeleted(false);
+        }
+        if (addr.getIsDefault() == null) {
+            addr.setIsDefault(false);
+        }
+
+        MemberAddressEntity savedAddress = memberAddressRepository.save(addr);
+
+        MemberAddressEntity response = new MemberAddressEntity();
+        response.setId(savedAddress.getId());
+        response.setPostNum(savedAddress.getPostNum());
+        response.setAddressRoad(savedAddress.getAddressRoad());
+        response.setAddressDetail(savedAddress.getAddressDetail());
+        response.setAddressExtra(savedAddress.getAddressExtra());
+        response.setIsDefault(savedAddress.getIsDefault());
+
+        return response;
+    }
+
 
     @Override
     public MemberAddressEntity getMemberAddressByAddressId(Integer addressId) {
