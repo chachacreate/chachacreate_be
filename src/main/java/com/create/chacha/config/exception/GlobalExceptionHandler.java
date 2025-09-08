@@ -11,6 +11,7 @@ import com.create.chacha.domains.buyer.exception.mypage.PasswordValidationExcept
 import com.create.chacha.domains.buyer.exception.payment.PaymentFailedException;
 import com.create.chacha.domains.buyer.exception.payment.PaymentRequestException;
 import com.create.chacha.domains.seller.areas.resumes.exception.ResumeUploadException;
+import com.create.chacha.domains.shared.chat.exception.*;
 import com.create.chacha.domains.shared.member.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -74,6 +75,43 @@ public class GlobalExceptionHandler {
     public ApiResponse<String> handleMemberUpdateFail(MemberUpdateException e) {
         log.warn("회원 정보 수정 실패: {}", e.getMessage());
         return new ApiResponse<>(ResponseCode.MEMBER_UPDATE_FAIL, e.getMessage());
+    }
+
+    // 채팅 관련 예외
+    @ExceptionHandler(ChatRoomNotFoundException.class)
+    public ApiResponse<String> handleChatRoomNotFound(ChatRoomNotFoundException e) {
+        log.warn("채팅방 조회 실패: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.CHAT_ROOM_NOT_FOUND, e.getMessage());
+    }
+
+    @ExceptionHandler(ChatMemberNotFoundException.class)
+    public ApiResponse<String> handleChatMemberNotFound(ChatMemberNotFoundException e) {
+        log.warn("채팅 회원 조회 실패: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.CHAT_MEMBER_NOT_FOUND, e.getMessage());
+    }
+
+    @ExceptionHandler(ChatAccessDeniedException.class)
+    public ApiResponse<String> handleChatAccessDenied(ChatAccessDeniedException e) {
+        log.warn("채팅방 접근 권한 없음: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.CHAT_ROOM_ACCESS_DENIED, e.getMessage());
+    }
+
+    @ExceptionHandler(ChatMessageSendException.class)
+    public ApiResponse<String> handleChatMessageSendError(ChatMessageSendException e) {
+        log.error("메시지 전송 실패: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.CHAT_MESSAGE_SEND_FAIL, e.getMessage());
+    }
+
+    @ExceptionHandler(ChatInvalidRequestException.class)
+    public ApiResponse<String> handleChatInvalidRequest(ChatInvalidRequestException e) {
+        log.warn("잘못된 채팅 요청: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.CHAT_INVALID_REQUEST, e.getMessage());
+    }
+
+    @ExceptionHandler(ChatWebSocketException.class)
+    public ApiResponse<String> handleChatWebSocketError(ChatWebSocketException e) {
+        log.error("채팅 WebSocket 오류: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.CHAT_WEBSOCKET_CONNECTION_ERROR, e.getMessage());
     }
 
 
