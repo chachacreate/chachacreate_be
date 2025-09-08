@@ -146,6 +146,32 @@ public enum ResponseCode {
 
     //// login & message
     // message
+    CHAT_ROOM_CREATED(201, "채팅방이 성공적으로 생성되었습니다."),
+    CHAT_ROOM_FOUND(200, "채팅방 조회 성공"),
+    CHAT_ROOM_NOT_FOUND(404, "채팅방을 찾을 수 없습니다."),
+    CHAT_ROOM_ACCESS_DENIED(403, "채팅방에 접근할 권한이 없습니다."),
+
+    CHAT_ROOMS_FOUND(200, "채팅방 목록 조회 성공"),
+    CHAT_ROOMS_NOT_FOUND(404, "채팅방 목록이 없습니다."),
+
+    CHAT_HISTORY_FOUND(200, "채팅 히스토리 조회 성공"),
+    CHAT_HISTORY_NOT_FOUND(404, "채팅 히스토리가 없습니다."),
+
+    CHAT_MESSAGE_SENT(200, "메시지가 성공적으로 전송되었습니다."),
+    CHAT_MESSAGE_SEND_FAIL(400, "메시지 전송에 실패했습니다."),
+
+    CHAT_READ_STATUS_UPDATED(200, "메시지 읽음 처리가 완료되었습니다."),
+    CHAT_READ_STATUS_UPDATE_FAIL(400, "메시지 읽음 처리에 실패했습니다."),
+
+    CHAT_MEMBER_NOT_FOUND(404, "채팅 참여자를 찾을 수 없습니다."),
+    CHAT_SEARCH_SUCCESS(200, "채팅방 검색 성공"),
+    CHAT_SEARCH_NO_RESULTS(404, "검색 결과가 없습니다."),
+
+    CHAT_NOTIFICATION_SENT(200, "알림이 성공적으로 전송되었습니다."),
+    CHAT_NOTIFICATION_SEND_FAIL(400, "알림 전송에 실패했습니다."),
+
+    CHAT_WEBSOCKET_CONNECTION_ERROR(500, "채팅 연결에 오류가 발생했습니다."),
+    CHAT_INVALID_REQUEST(400, "잘못된 채팅 요청입니다."),
 
     // login
     LOGOUT_SUCCESS(200,"로그아웃에 성공했습니다."),
