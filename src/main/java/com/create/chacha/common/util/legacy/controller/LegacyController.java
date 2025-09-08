@@ -10,10 +10,7 @@ import com.create.chacha.domains.shared.member.exception.MemberNotFoundException
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
@@ -33,6 +30,16 @@ public class LegacyController {
         MemberAddressEntity address = legacyInfoService.getMemberAddress(memberId);
         log.info(address.toString());
         return new ApiResponse<>(ResponseCode.OK, address);
+    }
+
+    @PostMapping("/info/memberAddress/{memberId}/insert")
+    public ApiResponse<MemberAddressEntity> insertMemberAddressEntityByMemberId(
+            @PathVariable Integer memberId,
+            @RequestBody MemberAddressEntity addr // 프론트에서 전달한 주소 정보
+    ) {
+        MemberAddressEntity savedAddress = legacyInfoService.setMemberAddress(memberId, addr);
+        log.info("Saved address: {}", savedAddress);
+        return new ApiResponse<>(ResponseCode.CREATED, savedAddress);
     }
 
     @GetMapping("/info/memberAddressByAddressId/{addressId}")
