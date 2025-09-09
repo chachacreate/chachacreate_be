@@ -39,4 +39,12 @@ public interface SellerSettlementService {
             String storeUrl,
             String accountHolderName
     );
+    
+    /**
+     * [판매자 정산 메인 페이지]
+     * 월별 정산 내역
+     * @param storeUrl
+     * @param holderName
+     * */
+    List<StoreMonthlySettlementItemDTO> getMonthlySettlementsByMain(String storeUrl, String holderName);
 }
