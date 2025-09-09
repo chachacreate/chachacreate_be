@@ -45,6 +45,6 @@ RUN echo '#!/bin/bash' > start.sh && \
     echo 'java -jar -Djava.security.egd=file:/dev/./urandom app.jar' >> start.sh && \
     chmod +x start.sh
 
-EXPOSE 8888
+EXPOSE 8080
 
 CMD ["./start.sh"]
