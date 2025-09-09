@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/seller/settlements/classes/{storeUrl}")
-public class SellerSettlementController {
+public class SellerSettlementClassesController {
 
     private final SellerSettlementService service;
     private final JwtTokenProvider jwtTokenProvider;

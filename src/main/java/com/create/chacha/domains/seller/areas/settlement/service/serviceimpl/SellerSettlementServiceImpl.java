@@ -3,6 +3,7 @@ package com.create.chacha.domains.seller.areas.settlement.service.serviceimpl;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,8 +14,10 @@ import com.create.chacha.common.util.dto.LegacyStoreDTO;
 import com.create.chacha.domains.seller.areas.settlement.dto.response.ClassDailySettlementResponseDTO;
 import com.create.chacha.domains.seller.areas.settlement.dto.response.ClassOptionResponseDTO;
 import com.create.chacha.domains.seller.areas.settlement.dto.response.StoreMonthlySettlementItemDTO;
+import com.create.chacha.domains.seller.areas.settlement.dto.response.StoreSettlementAccountDTO;
 import com.create.chacha.domains.seller.areas.settlement.service.SellerSettlementService;
 import com.create.chacha.domains.shared.repository.SellerClassSettlementRepository;
+import com.create.chacha.domains.shared.repository.SellerProductSettlementRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +34,7 @@ public class SellerSettlementServiceImpl implements SellerSettlementService {
 
     private final SellerClassSettlementRepository repository;
     private final LegacyAPIUtil legacyAPI; 
+    private final SellerProductSettlementRepository productRepository;
 
     private static final DateTimeFormatter YM = DateTimeFormatter.ofPattern("yyyy-MM");
 
@@ -104,4 +108,44 @@ public class SellerSettlementServiceImpl implements SellerSettlementService {
                 })
                 .toList();
     }
+
+
+    /**
+     * [상품] 스토어 전체 상품 정산 메타 조회
+     * - 레거시에서 sellerId 해석
+     * - 우리 DB(seller_settlement)에서 status/updated_at 조회
+     * - 프런트는 legacy.updateAt(문자열) ↔ boot.updatedAtKey(문자열)로 조인
+     */
+    @Override
+    public List<StoreSettlementAccountDTO> getMonthlyProductsSettlementsByStore(
+            String storeUrl,
+            String memberName
+    ) {
+        // 1) 레거시에서 sellerId 해석
+        LegacySellerDTO legacySeller = legacyAPI.getLegacySellerData(storeUrl);
+        if (legacySeller == null || legacySeller.getSellerId() == null) {
+            log.warn("[product-settlement] legacy seller not found. storeUrl={}", storeUrl);
+            return List.of();
+        }
+        Long sellerId = legacySeller.getSellerId().longValue();
+
+        // 2) 우리 DB 조회
+        List<SellerProductSettlementRepository.SellerSettlementRow> rows =
+                productRepository.findAllMetaBySellerId(sellerId);
+
+        // 3) DTO 변환 (updatedAtKey: "yyyy-MM-dd HH:mm:ss" / updateAt: LocalDateTime)
+        return rows.stream()
+                .filter(Objects::nonNull)
+                .map(r -> StoreSettlementAccountDTO.builder()
+                        .updatedAtKey(r.getUpdatedAtKey())
+                        .name(memberName)
+                        .settlementStatus(r.getSettlementStatus())
+                        .updateAt(r.getUpdatedAt() != null ? r.getUpdatedAt().toLocalDateTime() : null)
+                        .build()
+                )
+                .toList();
+    }
+
+    
+    
 }
