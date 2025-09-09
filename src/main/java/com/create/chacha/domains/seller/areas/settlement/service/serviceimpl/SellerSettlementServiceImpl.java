@@ -17,6 +17,7 @@ import com.create.chacha.domains.seller.areas.settlement.dto.response.StoreMonth
 import com.create.chacha.domains.seller.areas.settlement.dto.response.StoreSettlementAccountDTO;
 import com.create.chacha.domains.seller.areas.settlement.service.SellerSettlementService;
 import com.create.chacha.domains.shared.repository.SellerClassSettlementRepository;
+import com.create.chacha.domains.shared.repository.SellerMainSettlementRepository;
 import com.create.chacha.domains.shared.repository.SellerProductSettlementRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class SellerSettlementServiceImpl implements SellerSettlementService {
     private final SellerClassSettlementRepository repository;
     private final LegacyAPIUtil legacyAPI; 
     private final SellerProductSettlementRepository productRepository;
+    private final SellerMainSettlementRepository mainRepository;
 
     private static final DateTimeFormatter YM = DateTimeFormatter.ofPattern("yyyy-MM");
 
@@ -143,6 +145,40 @@ public class SellerSettlementServiceImpl implements SellerSettlementService {
                         .updateAt(r.getUpdatedAt() != null ? r.getUpdatedAt().toLocalDateTime() : null)
                         .build()
                 )
+                .toList();
+    }
+
+
+ // [판매자 정산 메인 페이지] 월별 정산
+    @Override
+    public List<StoreMonthlySettlementItemDTO> getMonthlySettlementsByMain(String storeUrl, String holderName) {
+        // 1) 레거시에서 sellerId + 계좌/은행 메타 해석
+        final LegacySellerDTO legacySeller = legacyAPI.getLegacySellerData(storeUrl);
+        if (legacySeller == null || legacySeller.getSellerId() == null) {
+            log.warn("[main-monthly] legacy seller not found. storeUrl={}", storeUrl);
+            return List.of();
+        }
+        final Long sellerId = legacySeller.getSellerId().longValue();
+        final String account = legacySeller.getAccount();        // legacy account
+        final String bank    = legacySeller.getAccountBank();    // legacy bank
+        final String name    = holderName;                       // 토큰의 이름(예금주명)
+
+        // 2) 우리 DB에서 월별 정산 메타 조회
+        final List<SellerMainSettlementRepository.Row> rows =
+                mainRepository.findMonthlyRowsBySellerId(sellerId);
+
+        // 3) DTO 합성/변환
+        return rows.stream()
+                .filter(Objects::nonNull)
+                .map(r -> StoreMonthlySettlementItemDTO.builder()
+                        .settlementDate(r.getSettlementDate() != null ? r.getSettlementDate().toLocalDateTime() : null)
+                        .amount(r.getAmount())
+                        .account(account)
+                        .bank(bank)
+                        .name(name)
+                        .status(r.getStatus())
+                        .updateAt(r.getUpdateAt() != null ? r.getUpdateAt().toLocalDateTime() : null)
+                        .build())
                 .toList();
     }
 
