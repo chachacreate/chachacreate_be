@@ -76,20 +76,16 @@ public class SellerReviewController {
 
     /** 상품 리뷰 목록 */
     @GetMapping("/review/{productId}")
-    public ResponseEntity<ApiResponse<List<ReviewListItemDTO>>> getReviewsByProduct(
+    public ApiResponse<List<ReviewListItemDTO>> getReviewsByProduct(
             @PathVariable("storeUrl") String storeUrl,
             @PathVariable("productId") Long productId
     ) {
         List<ReviewListItemDTO> body = service.getReviewsByStoreAndProduct(storeUrl, productId);
 
         if (body == null || body.isEmpty()) {
-            return ResponseEntity
-                    .status(ResponseCode.SELLER_PRODUCT_REVIEWS_NOT_FOUND.getStatus())
-                    .body(new ApiResponse<>(ResponseCode.SELLER_PRODUCT_REVIEWS_NOT_FOUND, null));
+            return new ApiResponse<>(ResponseCode.SELLER_PRODUCT_REVIEWS_NOT_FOUND, null);
         }
-        return ResponseEntity
-                .status(ResponseCode.SELLER_PRODUCT_REVIEWS_FOUND.getStatus())
-                .body(new ApiResponse<>(ResponseCode.SELLER_PRODUCT_REVIEWS_FOUND, body));
+        return new ApiResponse<>(ResponseCode.SELLER_PRODUCT_REVIEWS_NOT_FOUND, body);
     }
 
     /** 통계가 '사실상 비어있는지' 판단: total=0 이거나 buckets 전부 0개수 */
