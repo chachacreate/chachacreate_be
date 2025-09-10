@@ -7,4 +7,7 @@ public interface MemberLoginService {
     public TokenResponseDTO socialLogin(String email);
     public void logout(String mid, String accessToken);
     public TokenResponseDTO refresh(String mid, String refreshToken);
+    void invalidateAllTokensForUser(String email);
+    void invalidateAllTokensForUser(String email, String currentAccessToken);
+    TokenResponseDTO regenerateTokensForUser(String email);
 }

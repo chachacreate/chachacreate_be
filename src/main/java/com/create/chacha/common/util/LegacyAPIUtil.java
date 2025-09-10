@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.create.chacha.common.util.dto.LegacyProductDTO;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +21,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class LegacyAPIUtil {
+
+    @Value("${spring.legacy.api.url}")
+    private String legacyApiUrl;
+
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper(); // 재사용
 
     public LegacyStoreDTO getLegacyStoreData(String storeUrl) {
-        String url = "http://localhost:9999/legacy/info/store/" + storeUrl; // legacy API 주소
+        String url = legacyApiUrl + "/info/store/" + storeUrl; // legacy API 주소
         ResponseEntity<LegacyResponse<LegacyStoreDTO>> response =
                 restTemplate.exchange(url,
                         HttpMethod.GET,
@@ -36,7 +41,7 @@ public class LegacyAPIUtil {
     }
 
     public LegacySellerDTO getLegacySellerData(String storeUrl) {
-        String url = "http://localhost:9999/legacy/info/seller/" + storeUrl;
+        String url = legacyApiUrl + "/info/seller/" + storeUrl;
 
         ResponseEntity<LegacyResponse<LegacySellerDTO>> response =
                 restTemplate.exchange(url,
@@ -49,7 +54,7 @@ public class LegacyAPIUtil {
     }
 
     public LegacyStoreDTO getLegacyStoreDataById(Long storeId) {
-        String url = "http://localhost:9999/legacy/info/store/id/" + storeId;
+        String url = legacyApiUrl + "/info/store/id/" + storeId;
 
         ResponseEntity<String> response =
                 restTemplate.exchange(url, HttpMethod.GET, null, String.class);
@@ -71,7 +76,7 @@ public class LegacyAPIUtil {
     }
     
     public List<LegacyOrderStatusResponseDTO> getLegacyStatusList(String storeUrl) {
-        String url = "http://localhost:9999/legacy/" + storeUrl + "/seller/main";
+        String url = legacyApiUrl + storeUrl + "/seller/main";
 
         ResponseEntity<LegacyResponse<Map<String, Object>>> response =
                 restTemplate.exchange(

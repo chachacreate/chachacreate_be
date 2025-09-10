@@ -1,0 +1,50 @@
+# 빌드 스테이지
+# Gradle 8 + JDK 17 이미지 사용, builder 별칭 부여
+FROM docker.io/library/gradle:8-jdk17 AS builder
+
+# 컨테이너 내 작업 디렉토리를 /app으로 설정
+WORKDIR /app
+
+# Gradle 설정 파일들 먼저 복사 (레이어 캐싱 최적화)
+COPY build.gradle settings.gradle ./
+COPY gradle ./gradle
+COPY gradlew ./
+
+# 의존성 다운로드 (별도 레이어로 캐시, 메모리 효율성 위해 데몬 비활성화)
+RUN gradle dependencies --no-daemon
+
+# 소스코드 복사
+COPY src ./src
+
+# JAR 빌드 (Spring Boot 실행 가능한 bootJar 생성)
+RUN gradle clean bootJar --no-daemon
+
+# 실행 스테이지
+# 경량화 Eclipse Temurin jre 17 이미지 사용
+FROM docker.io/library/eclipse-temurin:17-jre
+
+MAINTAINER "chachacreate<kirk0221@naver.com>"
+
+# 환경변수 설정
+ENV TZ=Asia/Seoul
+
+# 시간대 설정 및 필요한 패키지 설치 (시간대 설정, envsubst 명령어 사용해 환경변수 설정, 이미지 크기 최소화위해 소스코드, 빌드 도구 삭제)
+RUN apt-get update && apt-get install -y gettext-base && \
+    ln -snf /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
+    echo Asia/Seoul > /etc/timezone && \
+    rm -rf /var/lib/apt/lists/*
+
+# 빌드 스테이지에서 와일드카드로 JAR 파일 복사
+COPY --from=builder /app/build/libs/*.jar /app/app.jar
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# 시작 스크립트 생성 (환경변수 기반 실행, -Djava.security.egd=file:/dev/./urandom로 난수 생성 가속화)
+RUN echo '#!/bin/bash' > start.sh && \
+    echo 'java -jar -Djava.security.egd=file:/dev/./urandom app.jar' >> start.sh && \
+    chmod +x start.sh
+
+EXPOSE 8080
+
+CMD ["./start.sh"]

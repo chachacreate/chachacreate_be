@@ -58,6 +58,30 @@ public class GlobalExceptionHandler {
         return new ApiResponse<>(ResponseCode.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
     }
 
+    @ExceptionHandler(MemberRoleUpdateException.class)
+    public ApiResponse<String> handleMemberRoleUpdateError(MemberRoleUpdateException e) {
+        log.error("회원 권한 업데이트 실패: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.MEMBER_ROLE_UPDATE_FAIL, e.getMessage());
+    }
+
+    @ExceptionHandler(InvalidMemberRoleException.class)
+    public ApiResponse<String> handleInvalidMemberRole(InvalidMemberRoleException e) {
+        log.warn("유효하지 않은 회원 권한: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.INVALID_MEMBER_ROLE, e.getMessage());
+    }
+
+    @ExceptionHandler(MemberNotFoundException.class)
+    public ApiResponse<String> handleMemberNotFound(MemberNotFoundException e) {
+        log.warn("회원 조회 실패: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.MEMBER_NOT_FOUND, e.getMessage());
+    }
+
+    @ExceptionHandler(UnauthorizedRoleUpdateException.class)
+    public ApiResponse<String> handleUnauthorizedRoleUpdate(UnauthorizedRoleUpdateException e) {
+        log.warn("권한 업데이트 권한 없음: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.UNAUTHORIZED_ROLE_UPDATE, e.getMessage());
+    }
+
     // 마이페이지
     @ExceptionHandler(PasswordValidationException.class)
     public ApiResponse<String> handleInvalidPassword(PasswordValidationException e) {
