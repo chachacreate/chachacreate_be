@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.create.chacha.domains.seller.areas.settlement.dto.response.ClassDailySettlementResponseDTO;
 import com.create.chacha.domains.seller.areas.settlement.dto.response.ClassOptionResponseDTO;
+import com.create.chacha.domains.seller.areas.settlement.dto.response.ClassSalesResponseDTO;
 import com.create.chacha.domains.seller.areas.settlement.dto.response.StoreMonthlySettlementItemDTO;
 import com.create.chacha.domains.seller.areas.settlement.dto.response.StoreSettlementAccountDTO;
 
@@ -47,4 +48,11 @@ public interface SellerSettlementService {
      * @param holderName
      * */
     List<StoreMonthlySettlementItemDTO> getMonthlySettlementsByMain(String storeUrl, String holderName);
+    
+    /**
+     * 특정 스토어의 클래스 일별 매출 조회
+     * @param storeId 스토어 ID
+     * @return 일자별 매출 리스트
+     */
+    List<ClassSalesResponseDTO> getDailySalesByStore(String storeUrl);
 }
