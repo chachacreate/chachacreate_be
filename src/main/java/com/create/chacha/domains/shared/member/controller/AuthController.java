@@ -2,13 +2,16 @@ package com.create.chacha.domains.shared.member.controller;
 
 import com.create.chacha.common.ApiResponse;
 import com.create.chacha.common.constants.ResponseCode;
+import com.create.chacha.domains.shared.constants.MemberRoleEnum;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
 import com.create.chacha.domains.shared.member.dto.request.LoginRequestDTO;
+import com.create.chacha.domains.shared.member.dto.request.MemberRoleUpdateRequestDTO;
 import com.create.chacha.domains.shared.member.dto.request.RegisterRequestDTO;
 import com.create.chacha.domains.shared.member.dto.response.AuthValidationResponseDTO;
 import com.create.chacha.domains.shared.member.dto.response.TokenResponseDTO;
 import com.create.chacha.domains.shared.member.service.AuthValidationService;
 import com.create.chacha.domains.shared.member.service.MemberLoginService;
+import com.create.chacha.domains.shared.member.service.MemberRoleService;
 import com.create.chacha.domains.shared.member.service.MemberSecurityService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -17,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,6 +32,7 @@ public class AuthController {
     private final MemberLoginService authService;
     private final MemberSecurityService memberService;
     private final AuthValidationService authValidationService;
+    private final MemberRoleService memberRoleService;
 
     // 로그인: AccessToken 바디, RefreshToken은 HttpOnly 쿠키
     @PostMapping("/login")
@@ -166,5 +171,55 @@ public class AuthController {
             log.error("토큰 체크 중 오류", e);
             return ResponseEntity.status(500).build();
         }
+    }
+
+    /**
+     * 특정 회원의 권한 조회
+     * @param memberId 회원 ID
+     * @return ApiResponse<MemberEntity> 회원 정보
+     */
+    @GetMapping(value = "/role/{memberId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ApiResponse<MemberEntity> getMemberRole(@PathVariable Long memberId) {
+        log.info("회원 권한 조회 요청 - 회원ID: {}", memberId);
+
+        MemberEntity member = memberRoleService.getMemberRole(memberId);
+        return new ApiResponse<>(ResponseCode.MEMBER_ROLE_QUERY_SUCCESS, member);
+    }
+
+    /**
+     * Path Variable로 권한 업데이트 + 새 토큰 발급 (시스템 자동 변경용)
+     * @param memberId 회원 ID
+     * @param role 새로운 권한
+     * @param response HTTP 응답 (쿠키 설정용)
+     * @return ApiResponse<TokenResponseDTO> 새로운 토큰과 회원 정보
+     */
+    @PatchMapping(value = "/role/{memberId}/{role}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ApiResponse<TokenResponseDTO> updateMemberRoleByPathWithToken(
+            @PathVariable Long memberId,
+            @PathVariable MemberRoleEnum role,
+            HttpServletResponse response) {
+
+        log.info("회원 권한 업데이트 및 토큰 재발급 요청 (Path) - 회원ID: {}, 권한: {}", memberId, role);
+
+        TokenResponseDTO tokenDTO = memberRoleService.updateMemberRoleWithToken(memberId, role);
+
+        // RefreshToken 쿠키 등록
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenDTO.getRefreshToken())
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(7 * 24 * 60 * 60)  // 7일
+                .sameSite("None")
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
+
+        // AccessToken만 반환 (RefreshToken은 쿠키로 설정)
+        TokenResponseDTO responseDTO = new TokenResponseDTO(
+                tokenDTO.getLogin(),
+                tokenDTO.getAccessToken(),
+                null  // RefreshToken은 쿠키로 전송하므로 null
+        );
+
+        return new ApiResponse<>(ResponseCode.MEMBER_ROLE_UPDATE_SUCCESS, responseDTO);
     }
 }

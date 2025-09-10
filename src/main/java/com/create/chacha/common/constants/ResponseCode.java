@@ -181,7 +181,15 @@ public enum ResponseCode {
     REGISTER_SUCCESS(201,"회원 가입에 성공했습니다."),
     REGISTER_FAIL(400, "회원 가입에 실패했습니다. 정보가 다 입력되었는지 확인해주세요."),
     LOGIN_SUCCESS(200,"로그인에 성공했습니다."),
-    LOGIN_FAIL(401, "로그인에 실패했습니다. 회원 아이디나 비밀번호를 확인해주세요");
+    LOGIN_FAIL(401, "로그인에 실패했습니다. 회원 아이디나 비밀번호를 확인해주세요"),
+
+    // 회원 권한 관련
+    MEMBER_ROLE_UPDATE_SUCCESS(200, "회원 권한이 성공적으로 업데이트되었습니다."),
+    MEMBER_ROLE_UPDATE_FAIL(400, "회원 권한 업데이트에 실패했습니다."),
+    MEMBER_NOT_FOUND(404, "존재하지 않는 회원입니다."),
+    UNAUTHORIZED_ROLE_UPDATE(403, "권한 업데이트 권한이 없습니다."),
+    INVALID_MEMBER_ROLE(400, "유효하지 않은 회원 권한입니다."),
+    MEMBER_ROLE_QUERY_SUCCESS(200, "회원 권한 조회가 성공적으로 완료되었습니다.");
 
     private final int status;
     private final String message;
