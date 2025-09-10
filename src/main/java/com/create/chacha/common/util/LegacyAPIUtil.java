@@ -4,6 +4,7 @@ package com.create.chacha.common.util;
 import java.util.List;
 import java.util.Map;
 
+import com.create.chacha.common.util.dto.LegacyProductDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -93,6 +94,19 @@ public class LegacyAPIUtil {
                 mapper.convertValue(data.get("statusList"), new TypeReference<List<LegacyOrderStatusResponseDTO>>() {});
 
         return statusList;
+    }
+
+    public LegacyProductDTO getLegacyProductData(Long productId) {
+        String url = "http://localhost:9999/legacy/info/product/" + productId;
+
+        ResponseEntity<LegacyResponse<LegacyProductDTO>> response =
+                restTemplate.exchange(url,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<LegacyResponse<LegacyProductDTO>>() {}
+                );
+
+        return response.getBody().getData();
     }
     
 
