@@ -12,35 +12,17 @@ public interface ReviewStatsRepository extends JpaRepository<ReviewEntity, Long>
     interface StatsRow {
         Double getBucket(); // 0.0, 0.5, ..., 5.0
         Long getCnt();
+        Long getProductId();
     }
 
     @Query(value =
-        "SELECT CAST(LEAST(5.0, GREATEST(0.0, ROUND(r.rating * 2) / 2)) AS DECIMAL(3,1)) AS bucket, " +
-        "       COUNT(*) AS cnt " +
-        "FROM review r " +
-        "JOIN product p ON p.id = r.product_id " +
-        "JOIN store   s ON s.id = p.seller_id " +
-        "WHERE s.url = :storeUrl " +
-        "  AND r.is_deleted = 0 " +
-        "  AND r.rating IS NOT NULL " +
-        "GROUP BY bucket " +
-        "ORDER BY bucket ASC",
-        nativeQuery = true)
-    List<StatsRow> findStatsByStoreUrl(@Param("storeUrl") String storeUrl);
-
-    @Query(value =
-        "SELECT CAST(LEAST(5.0, GREATEST(0.0, ROUND(r.rating * 2) / 2)) AS DECIMAL(3,1)) AS bucket, " +
-        "       COUNT(*) AS cnt " +
-        "FROM review r " +
-        "JOIN product p ON p.id = r.product_id " +
-        "JOIN store   s ON s.id = p.seller_id " +
-        "WHERE s.url = :storeUrl " +
-        "  AND p.id = :productId " +
-        "  AND r.is_deleted = 0 " +
-        "  AND r.rating IS NOT NULL " +
-        "GROUP BY bucket " +
-        "ORDER BY bucket ASC",
-        nativeQuery = true)
-    List<StatsRow> findStatsByStoreUrlAndProductId(@Param("storeUrl") String storeUrl,
-                                                   @Param("productId") Long productId);
+            "SELECT CAST(LEAST(5.0, GREATEST(0.0, ROUND(r.rating * 2) / 2)) AS DECIMAL(3,1)) AS bucket, r.product_id AS productId, " +
+                    "       COUNT(*) AS cnt " +
+                    "FROM review r " +
+                    "WHERE r.is_deleted = 0 " +
+                    "  AND r.rating IS NOT NULL " +
+                    "GROUP BY bucket, productId " +
+                    "ORDER BY bucket ASC",
+            nativeQuery = true)
+    List<StatsRow> findStatsOnly();
 }

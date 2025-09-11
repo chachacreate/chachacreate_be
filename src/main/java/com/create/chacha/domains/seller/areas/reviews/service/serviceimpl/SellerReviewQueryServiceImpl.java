@@ -1,8 +1,14 @@
 package com.create.chacha.domains.seller.areas.reviews.service.serviceimpl;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
+import com.create.chacha.common.util.LegacyAPIUtil;
+import com.create.chacha.common.util.dto.LegacyProductDTO;
+import com.create.chacha.common.util.dto.LegacyStoreDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,35 +23,67 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SellerReviewQueryServiceImpl implements SellerReviewQueryService {
 
-    private final ReviewReadRepository repo;
-    
+    private final ReviewReadRepository reviewReadRepository;
+    private final LegacyAPIUtil legacyAPIUtil;
+
+
+    // 스토어의 전체 리뷰 조회
     @Override
     @Transactional(readOnly = true)
     public List<ReviewListItemDTO> getReviewsByStore(String storeUrl) {
-        List<ReviewRow> rows = repo.findReviewsByStoreUrl(storeUrl);
-        return rows.stream().map(this::toDTO).collect(Collectors.toList());
+        LegacyStoreDTO store = legacyAPIUtil.getLegacyStoreData(storeUrl);
+        Integer storeId = store.getStoreId();
+
+        List<ReviewRow> rows = reviewReadRepository.findReviewsOnly(); // 전체 리뷰 조회
+
+        List<ReviewListItemDTO> dtos = new ArrayList<>();
+        for (ReviewRow row : rows) {
+            LegacyProductDTO product = legacyAPIUtil.getLegacyProductData(row.getProductId());
+            if (product != null && storeId.equals(product.getStoreId())) { // storeId로 조건 확인
+                dtos.add(toDTO(row, product));
+            }
+        }
+        return dtos;
     }
 
+    // 스토어의 상품별 리뷰 조회
     @Override
     @Transactional(readOnly = true)
     public List<ReviewListItemDTO> getReviewsByStoreAndProduct(String storeUrl, Long productId) {
-        List<ReviewRow> rows = repo.findReviewsByStoreUrlAndProductId(storeUrl, productId);
-        return rows.stream().map(this::toDTO).collect(Collectors.toList());
+        LegacyStoreDTO store = legacyAPIUtil.getLegacyStoreData(storeUrl);
+        Integer storeId = store.getStoreId();
+
+        List<ReviewRow> rows = reviewReadRepository.findReviewsOnly(); // 전체 리뷰 조회
+        List<ReviewListItemDTO> dtos = new ArrayList<>();
+
+        for (ReviewRow row : rows) {
+            LegacyProductDTO product = legacyAPIUtil.getLegacyProductData(row.getProductId());
+            if (product != null
+                    && storeId.equals(product.getStoreId())
+                    && productId.equals(product.getProductId().longValue())) { // storeId & productId로 조건 확인
+                dtos.add(toDTO(row, product));
+            }
+        }
+        return dtos;
     }
 
-    private ReviewListItemDTO toDTO(ReviewRow r) {
-        return ReviewListItemDTO.builder()
-                .reviewId(r.getReviewId())
-                .reviewCreatedAt(r.getReviewCreatedAt())
-                .reviewUpdatedAt(r.getReviewUpdatedAt())
-                .authorId(r.getAuthorId())
-                .authorName(r.getAuthorName())
-                .content(r.getContent())
-                .productName(r.getProductName())
-                .productCreatedAt(r.getProductCreatedAt())
-                .productThumbnailUrl(r.getProductThumbnailUrl())
-                .likeCount(r.getLikeCount())
-                .productRating(r.getProductRating())
-                .build();
+    private ReviewListItemDTO toDTO(ReviewRow row, LegacyProductDTO product) {
+        ReviewListItemDTO dto = new ReviewListItemDTO();
+        dto.setReviewId(row.getReviewId());
+        dto.setReviewCreatedAt(row.getReviewCreatedAt());
+        dto.setReviewUpdatedAt(row.getReviewUpdatedAt());
+        dto.setAuthorId(row.getAuthorId());
+        dto.setAuthorName(row.getAuthorName());
+        dto.setContent(row.getContent());
+        dto.setLikeCount(row.getLikeCount());
+        dto.setProductRating(row.getProductRating());
+
+        if (product != null) {
+            dto.setProductName(product.getProductName());
+            dto.setProductThumbnailUrl(product.getThumbnailUrl());
+//            dto.setProductCreatedAt(product.getProductDate());   // 상품 등록순으로 정렬 시 필요
+        }
+
+        return dto;
     }
 }
