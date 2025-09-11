@@ -1,9 +1,11 @@
 package com.create.chacha.domains.seller.areas.settlement.service.serviceimpl;
 
+import java.sql.Date;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,9 +15,11 @@ import com.create.chacha.common.util.dto.LegacySellerDTO;
 import com.create.chacha.common.util.dto.LegacyStoreDTO;
 import com.create.chacha.domains.seller.areas.settlement.dto.response.ClassDailySettlementResponseDTO;
 import com.create.chacha.domains.seller.areas.settlement.dto.response.ClassOptionResponseDTO;
+import com.create.chacha.domains.seller.areas.settlement.dto.response.ClassSalesResponseDTO;
 import com.create.chacha.domains.seller.areas.settlement.dto.response.StoreMonthlySettlementItemDTO;
 import com.create.chacha.domains.seller.areas.settlement.dto.response.StoreSettlementAccountDTO;
 import com.create.chacha.domains.seller.areas.settlement.service.SellerSettlementService;
+import com.create.chacha.domains.shared.repository.ClassSalesRepository;
 import com.create.chacha.domains.shared.repository.SellerClassSettlementRepository;
 import com.create.chacha.domains.shared.repository.SellerMainSettlementRepository;
 import com.create.chacha.domains.shared.repository.SellerProductSettlementRepository;
@@ -37,6 +41,7 @@ public class SellerSettlementServiceImpl implements SellerSettlementService {
     private final LegacyAPIUtil legacyAPI; 
     private final SellerProductSettlementRepository productRepository;
     private final SellerMainSettlementRepository mainRepository;
+    private final ClassSalesRepository classSalesRepository;
 
     private static final DateTimeFormatter YM = DateTimeFormatter.ofPattern("yyyy-MM");
 
@@ -180,6 +185,25 @@ public class SellerSettlementServiceImpl implements SellerSettlementService {
                         .updateAt(r.getUpdateAt() != null ? r.getUpdateAt().toLocalDateTime() : null)
                         .build())
                 .toList();
+    }
+
+
+    @Override
+    public List<ClassSalesResponseDTO> getDailySalesByStore(String storeUrl) {
+    	 final LegacyStoreDTO legacyStore = legacyAPI.getLegacyStoreData(storeUrl);
+         if (legacyStore == null || legacyStore.getStoreId() == null) {
+             log.warn("[main-monthly] legacy seller not found. storeUrl={}", storeUrl);
+             return List.of();
+         }
+         final Long storeId = legacyStore.getStoreId().longValue();
+    	
+    	return classSalesRepository.findDailySalesByStore(storeId).stream()
+    	        .map((Object[] result) -> ClassSalesResponseDTO.builder()
+    	                .ymd(((Date) result[0]).toLocalDate())
+    	                .amt(((Number) result[1]).intValue())
+    	                .build())
+    	        .collect(Collectors.toList());
+
     }
 
     
