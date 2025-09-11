@@ -144,6 +144,8 @@ public enum ResponseCode {
     PASSWORD_MISMATCH(400, "비밀번호가 일치하지 않습니다."),
     MEMBER_UPDATE_FAIL(400, "회원 정보 수정에 실패했습니다."),
 
+    ADDR_CHANGE_OK(200, "주소 수정이 완료되었습니다."),
+
     //// login & message
     // message
     CHAT_ROOM_CREATED(201, "채팅방이 성공적으로 생성되었습니다."),
