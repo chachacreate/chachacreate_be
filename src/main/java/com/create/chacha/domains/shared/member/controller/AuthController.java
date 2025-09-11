@@ -5,7 +5,6 @@ import com.create.chacha.common.constants.ResponseCode;
 import com.create.chacha.domains.shared.constants.MemberRoleEnum;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
 import com.create.chacha.domains.shared.member.dto.request.LoginRequestDTO;
-import com.create.chacha.domains.shared.member.dto.request.MemberRoleUpdateRequestDTO;
 import com.create.chacha.domains.shared.member.dto.request.RegisterRequestDTO;
 import com.create.chacha.domains.shared.member.dto.response.AuthValidationResponseDTO;
 import com.create.chacha.domains.shared.member.dto.response.TokenResponseDTO;
@@ -17,10 +16,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,6 +27,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @Slf4j
 public class AuthController {
+
+    @Value("${jwt.refresh-token-validity}")
+    int refreshTokenValidityInMilSeconds;
 
     private final MemberLoginService authService;
     private final MemberSecurityService memberService;
@@ -46,7 +48,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(true)              // HTTPS 사용 시 true 권장
                 .path("/")                 // 모든 경로에서 접근 가능
-                .maxAge(7 * 24 * 60 * 60)  // 7일
+                .maxAge(refreshTokenValidityInMilSeconds)  // 7일
                 .sameSite("None")        // CSRF 방어(Strict), 서로 다른 포트/도메인 간 쿠키 전송(None)
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
@@ -208,7 +210,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
-                .maxAge(7 * 24 * 60 * 60)  // 7일
+                .maxAge(refreshTokenValidityInMilSeconds)  // 7일
                 .sameSite("None")
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
