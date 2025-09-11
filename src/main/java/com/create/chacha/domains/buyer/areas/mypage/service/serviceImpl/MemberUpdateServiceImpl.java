@@ -1,6 +1,7 @@
 package com.create.chacha.domains.buyer.areas.mypage.service.serviceImpl;
 
 import com.create.chacha.domains.buyer.areas.mypage.dto.request.ChangeAddressRequestDTO;
+import com.create.chacha.domains.buyer.areas.mypage.dto.response.ChangeAddressResponseDTO;
 import com.create.chacha.domains.buyer.areas.mypage.service.MemberUpdateService;
 import com.create.chacha.domains.buyer.exception.mypage.PasswordValidationException;
 import com.create.chacha.domains.shared.entity.member.MemberAddressEntity;
@@ -48,6 +49,19 @@ public class MemberUpdateServiceImpl implements MemberUpdateService {
         }
     }
 
+    @Override
+    public ChangeAddressResponseDTO getChangedAddress(Long memberId) {
+        MemberAddressEntity memberAddress = memberAddressRepository
+                .findFirstByMember_IdAndIsDefaultOrderByIdAsc(memberId, true)
+                .orElseThrow(() -> new RuntimeException("기본 배송지가 없습니다."));
+
+        return ChangeAddressResponseDTO.builder()
+                .postNum(memberAddress.getPostNum())
+                .addressRoad(memberAddress.getAddressRoad())
+                .addressDetail(memberAddress.getAddressDetail())
+                .addressExtra(memberAddress.getAddressExtra())
+                .build();
+    }
 
     @Override
     public void changePasswordFor(Long memberId, String currentPwd,

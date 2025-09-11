@@ -5,7 +5,9 @@ import com.create.chacha.common.constants.ResponseCode;
 import com.create.chacha.config.security.SecurityUser;
 import com.create.chacha.domains.buyer.areas.mypage.dto.request.ChangeAddressRequestDTO;
 import com.create.chacha.domains.buyer.areas.mypage.dto.request.ChangePasswordRequestDTO;
+import com.create.chacha.domains.buyer.areas.mypage.dto.response.ChangeAddressResponseDTO;
 import com.create.chacha.domains.buyer.areas.mypage.service.MemberUpdateService;
+import com.create.chacha.domains.shared.entity.member.MemberAddressEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,12 +32,13 @@ public class MemberUpdateController {
     }
 
     @PatchMapping("/changeaddr")
-    public ApiResponse<String> changeMyAddress(@AuthenticationPrincipal SecurityUser user,
-                                               @RequestBody ChangeAddressRequestDTO request) {
+    public ApiResponse<ChangeAddressResponseDTO> changeMyAddress(@AuthenticationPrincipal SecurityUser user,
+                                                            @RequestBody ChangeAddressRequestDTO request) {
 
         memberUpdateService.changeAddressFor(user.getMemberId(), request);
+        ChangeAddressResponseDTO response = memberUpdateService.getChangedAddress(user.getMemberId());
 
-        return new ApiResponse<>(ResponseCode.ADDR_CHANGE_OK, "주소 수정이 완료되었습니다.");
+        return new ApiResponse<>(ResponseCode.ADDR_CHANGE_OK, response);
     }
 
 }
