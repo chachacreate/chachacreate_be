@@ -50,4 +50,7 @@ public interface ReviewReadRepository extends JpaRepository<ReviewEntity, Long> 
     	    "ORDER BY r.created_at DESC",    /* <-- 리뷰 최신순 */
     	    nativeQuery = true)
     List<ReviewRow> findReviewsOnly();
+
+    @Query("SELECT r.member.name FROM ReviewEntity r WHERE r.id = :reviewId AND r.isDeleted = false")
+    String findAuthorNameByReviewId(@Param("reviewId") Long reviewId);
 }

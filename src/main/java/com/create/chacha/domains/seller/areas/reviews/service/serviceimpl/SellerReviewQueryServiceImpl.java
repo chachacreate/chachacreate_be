@@ -1,8 +1,5 @@
 package com.create.chacha.domains.seller.areas.reviews.service.serviceimpl;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,12 +65,15 @@ public class SellerReviewQueryServiceImpl implements SellerReviewQueryService {
     }
 
     private ReviewListItemDTO toDTO(ReviewRow row, LegacyProductDTO product) {
+        String name = reviewReadRepository.findAuthorNameByReviewId(row.getReviewId());
+
         ReviewListItemDTO dto = new ReviewListItemDTO();
         dto.setReviewId(row.getReviewId());
         dto.setReviewCreatedAt(row.getReviewCreatedAt());
         dto.setReviewUpdatedAt(row.getReviewUpdatedAt());
         dto.setAuthorId(row.getAuthorId());
-        dto.setAuthorName(row.getAuthorName());
+        dto.setAuthorName(name); // 리뷰자 이름 복호화
+        dto.setProductId(row.getProductId());
         dto.setContent(row.getContent());
         dto.setLikeCount(row.getLikeCount());
         dto.setProductRating(row.getProductRating());
