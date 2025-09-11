@@ -1,8 +1,11 @@
 package com.create.chacha.domains.buyer.areas.mypage.service.serviceImpl;
 
-import com.create.chacha.domains.buyer.areas.mypage.service.ChangePasswordService;
+import com.create.chacha.domains.buyer.areas.mypage.dto.request.ChangeAddressRequestDTO;
+import com.create.chacha.domains.buyer.areas.mypage.service.MemberUpdateService;
 import com.create.chacha.domains.buyer.exception.mypage.PasswordValidationException;
+import com.create.chacha.domains.shared.entity.member.MemberAddressEntity;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
+import com.create.chacha.domains.shared.repository.MemberAddressRepository;
 import com.create.chacha.domains.shared.repository.MemberRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +22,32 @@ import java.util.regex.Pattern;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ChangePasswordServiceImpl implements ChangePasswordService {
+public class MemberUpdateServiceImpl implements MemberUpdateService {
 
     private static final String ALLOWED_SPECIAL = "!\"#$%&'()*+,-./:;<=>?@[₩]^_`{|}~";
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MemberAddressRepository memberAddressRepository;
+
+    @Override
+    public void changeAddressFor(Long memberId, ChangeAddressRequestDTO request) {
+        MemberEntity member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자 정보를 찾을 수 없습니다."));
+
+        int updated = memberAddressRepository.updateDefaultAddress(
+                memberId,
+                request.getPostNum(),
+                request.getAddressRoad(),
+                request.getAddressDetail(),
+                request.getAddressExtra()
+        );
+
+        if (updated == 0) {
+            throw new IllegalStateException("기본 배송지 수정 실패");
+        }
+    }
+
 
     @Override
     public void changePasswordFor(Long memberId, String currentPwd,
