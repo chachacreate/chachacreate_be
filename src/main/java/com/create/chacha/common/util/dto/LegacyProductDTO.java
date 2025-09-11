@@ -12,12 +12,7 @@ public class LegacyProductDTO {
     private String typeCategoryId;
     private String dcategoryId;
     private String productName;
-
     private Integer price;
-
-    /**
-     * 상품 상세 설명 (DB에서는 CLOB 타입으로 저장)
-     */
     private String productDetail;
 
     private Integer stock;
@@ -27,4 +22,7 @@ public class LegacyProductDTO {
     private Integer viewCnt;
     private Integer flagshipCheck;
     private Integer deleteCheck;
+
+    // 상품 썸네일 1번 이미지 url
+    private String thumbnailUrl;
 }
