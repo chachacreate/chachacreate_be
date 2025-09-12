@@ -195,7 +195,7 @@ public class AuthController {
      * @param response HTTP 응답 (쿠키 설정용)
      * @return ApiResponse<TokenResponseDTO> 새로운 토큰과 회원 정보
      */
-    @PatchMapping(value = "/role/{memberId}/{role}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/role/{memberId}/{role}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ApiResponse<TokenResponseDTO> updateMemberRoleByPathWithToken(
             @PathVariable Long memberId,
             @PathVariable MemberRoleEnum role,
