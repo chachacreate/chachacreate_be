@@ -21,10 +21,24 @@ public class SellerMainStatusController {
 
     private final SellerMainStatusService sellerMainStatusService;
 
+ // Controller
     @GetMapping("/status")
-    public ApiResponse<OrderStatusCountResponseDTO> getOrderStatus(@PathVariable("storeUrl") String storeUrl) {
-        log.info("판매자 메인 주문 상태 조회 - storeUrl: {}", storeUrl);
-        OrderStatusCountResponseDTO response = sellerMainStatusService.getOrderStatusCounts(storeUrl);
-        return new ApiResponse<>(ResponseCode.SELLER_MAIN_STATUS_OK, response);
+    public ApiResponse<OrderStatusCountResponseDTO> getOrderStatus(
+            @PathVariable String storeUrl,
+            jakarta.servlet.http.HttpServletRequest request
+    ) {
+        String jsessionId = null;
+        var cookies = request.getCookies();
+        if (cookies != null) {
+            for (var c : cookies) {
+                if ("JSESSIONID".equalsIgnoreCase(c.getName())) {
+                    jsessionId = c.getValue();
+                    break;
+                }
+            }
+        }
+        var dto = sellerMainStatusService.getOrderStatusCounts(storeUrl, jsessionId);
+        return new ApiResponse<>(ResponseCode.SELLER_MAIN_STATUS_OK, dto);
     }
+
 }
