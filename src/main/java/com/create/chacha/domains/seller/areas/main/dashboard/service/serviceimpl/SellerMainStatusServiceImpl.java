@@ -19,32 +19,23 @@ public class SellerMainStatusServiceImpl implements SellerMainStatusService {
 
     private final LegacyAPIUtil legacyAPIUtil;
 
+ // Impl
     @Override
-    public OrderStatusCountResponseDTO getOrderStatusCounts(String storeUrl) {
-        List<LegacyOrderStatusResponseDTO> statusList = legacyAPIUtil.getLegacyStatusList(storeUrl);
-
-        long newOrders = 0L;
-        long delivered = 0L;
-        long cancelRequests = 0L;
-        long refunds = 0L;
-
-        for (LegacyOrderStatusResponseDTO dto : statusList) {
-            log.info("Legacy status row: {}", dto);
-
-            switch (dto.getStatus()) {
-                case "ORDER_OK" -> newOrders = dto.getCount();
-                case "DELIVERED" -> delivered = dto.getCount();
-                case "CANCEL_RQ" -> cancelRequests = dto.getCount();
-                case "REFUND_OK" -> refunds = dto.getCount();
-                default -> log.warn("알 수 없는 status 값: {}", dto.getStatus());
+    public OrderStatusCountResponseDTO getOrderStatusCounts(String storeUrl, String jsessionId) {
+        var main = legacyAPIUtil.fetchLegacyMain(storeUrl, jsessionId); // 아래 B절의 새 메서드
+        var list = main.getStatusList() == null ? List.<LegacyOrderStatusResponseDTO>of() : main.getStatusList();
+        long newOrders=0, delivered=0, cancelRequests=0, refunds=0;
+        for (var r : list) {
+            switch (r.getStatus()) {
+                case "ORDER_OK"  -> newOrders = r.getCount();
+                case "DELIVERED" -> delivered = r.getCount();
+                case "CANCEL_RQ" -> cancelRequests = r.getCount();
+                case "REFUND_OK" -> refunds = r.getCount();
             }
         }
-
         return OrderStatusCountResponseDTO.builder()
-                .newOrders(newOrders)
-                .delivered(delivered)
-                .cancelRequests(cancelRequests)
-                .refunds(refunds)
-                .build();
+                .newOrders(newOrders).delivered(delivered)
+                .cancelRequests(cancelRequests).refunds(refunds).build();
     }
+
 }
