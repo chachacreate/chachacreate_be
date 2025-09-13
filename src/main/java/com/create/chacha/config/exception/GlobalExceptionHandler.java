@@ -8,6 +8,8 @@ import com.create.chacha.domains.buyer.exception.classes.ReservationSaveExceptio
 import com.create.chacha.domains.buyer.exception.mypage.MemberUpdateException;
 import com.create.chacha.domains.buyer.exception.mypage.PasswordMismatchException;
 import com.create.chacha.domains.buyer.exception.mypage.PasswordValidationException;
+import com.create.chacha.domains.buyer.exception.mypage.orderlist.OrderCancelException;
+import com.create.chacha.domains.buyer.exception.mypage.orderlist.OrderRefundException;
 import com.create.chacha.domains.buyer.exception.payment.PaymentFailedException;
 import com.create.chacha.domains.buyer.exception.payment.PaymentRequestException;
 import com.create.chacha.domains.seller.areas.resumes.exception.ResumeUploadException;
@@ -99,6 +101,19 @@ public class GlobalExceptionHandler {
     public ApiResponse<String> handleMemberUpdateFail(MemberUpdateException e) {
         log.warn("회원 정보 수정 실패: {}", e.getMessage());
         return new ApiResponse<>(ResponseCode.MEMBER_UPDATE_FAIL, e.getMessage());
+    }
+
+    // 마이페이지 주문 취소/환불
+    @ExceptionHandler(OrderCancelException.class)
+    public ApiResponse<String> handleMemberUpdateFail(OrderCancelException e) {
+        log.warn("주문 취소 요청 실패: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.ORDER_CANCEL_FAIL, e.getMessage());
+    }
+
+    @ExceptionHandler(OrderRefundException.class)
+    public ApiResponse<String> handleMemberUpdateFail(OrderRefundException e) {
+        log.warn("주문 환불 요청 실패: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.ORDER_REFUND_FAIL, e.getMessage());
     }
 
     // 채팅 관련 예외

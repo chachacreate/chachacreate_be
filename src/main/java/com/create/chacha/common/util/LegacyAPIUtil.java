@@ -107,7 +107,7 @@ public class LegacyAPIUtil {
     }
 
     public LegacyProductDTO getLegacyProductData(Long productId) {
-        String url = "http://localhost:9999/legacy/info/product/" + productId;
+        String url = legacyApiUrl + "/info/product/" + productId;
         ResponseEntity<LegacyResponse<LegacyProductDTO>> response =
                 restTemplate.exchange(url,
                         HttpMethod.GET,
@@ -115,6 +115,28 @@ public class LegacyAPIUtil {
                         new ParameterizedTypeReference<LegacyResponse<LegacyProductDTO>>() {}
                 );
         return response.getBody().getData();
+    }
+
+    // 상품 주문 취소/환불 시 legacy로 orderDetail 테이블 orderStatus 업데이트 요청
+    public void updateLegacyOrderStatus(Long orderDetailId, String status) {
+        String url = legacyApiUrl + "/order/status/update";
+        Map<String, Object> body = Map.of(
+                "orderDetailId", orderDetailId,
+                "orderStatus", status
+        );
+
+        // POST 요청의 body 형식이 JSON임을 알림
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<LegacyResponse<Void>> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                entity,
+                new ParameterizedTypeReference<LegacyResponse<Void>>() {}
+        );
     }
 
     /* ========================= 신규 메서드 (안전 파서 + 쿠키 지원) ========================= */
