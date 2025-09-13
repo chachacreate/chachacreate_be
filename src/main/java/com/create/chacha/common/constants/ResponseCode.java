@@ -146,6 +146,11 @@ public enum ResponseCode {
 
     ADDR_CHANGE_OK(200, "주소 수정이 완료되었습니다."),
 
+    ORDER_CANCEL_OK(200, "주문 취소 요청이 완료되었습니다."),
+    ORDER_REFUND_OK(200, "주문 환불 요청이 완료되었습니다."),
+    ORDER_CANCEL_FAIL(400, "주문 취소 요청에 실패하였습니다. 요청 데이터를 확인해 주세요."),
+    ORDER_REFUND_FAIL(400, "주문 환불 요청에 실패하였습니다. 요청 데이터를 확인해 주세요."),
+
     //// login & message
     // message
     CHAT_ROOM_CREATED(201, "채팅방이 성공적으로 생성되었습니다."),
