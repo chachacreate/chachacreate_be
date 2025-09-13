@@ -4,10 +4,10 @@ import com.create.chacha.common.util.LegacyAPIUtil;
 import com.create.chacha.domains.buyer.areas.mypage.repository.OrderCancelRepository;
 import com.create.chacha.domains.buyer.areas.mypage.repository.OrderRefundRepository;
 import com.create.chacha.domains.buyer.areas.mypage.service.CancelRefundService;
+import com.create.chacha.domains.buyer.exception.mypage.orderlist.OrderCancelException;
 import com.create.chacha.domains.shared.entity.order.OrderCancelEntity;
 import com.create.chacha.domains.shared.entity.order.OrderDetailEntity;
 import com.create.chacha.domains.shared.entity.order.OrderRefundEntity;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +24,6 @@ public class CancelRefundServiceImpl implements CancelRefundService {
     private final OrderCancelRepository cancelRepository;
     private final OrderRefundRepository refundRepository;
     private final LegacyAPIUtil legacyAPIUtil;
-
-    private final EntityManager entityManager;
 
     @Override
     public boolean requestCancel(Long orderDetailId, Integer amount, String content) {
@@ -44,8 +42,7 @@ public class CancelRefundServiceImpl implements CancelRefundService {
 
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+            throw new OrderCancelException("주문 취소 요청 중 오류 발생", e);
         }
     }
 
@@ -66,8 +63,7 @@ public class CancelRefundServiceImpl implements CancelRefundService {
 
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+            throw new OrderCancelException("주문 환불 요청 중 오류 발생", e);
         }
     }
 }
