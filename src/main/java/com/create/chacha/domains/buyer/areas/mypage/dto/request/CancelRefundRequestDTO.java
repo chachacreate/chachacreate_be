@@ -4,7 +4,6 @@ import lombok.Data;
 
 @Data
 public class CancelRefundRequestDTO {
-    private Long orderDetailId;
     private Integer amount;
     private String content; // 사유
 }
