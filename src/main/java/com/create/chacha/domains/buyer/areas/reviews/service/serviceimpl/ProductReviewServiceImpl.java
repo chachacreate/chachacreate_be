@@ -73,6 +73,7 @@ public class ProductReviewServiceImpl implements ProductReviewService {
                         .productName(product.getProductName())
                         .rating(r.getRating())
                         .content(r.getContent())
+                        .reviewDate(r.getCreatedAt())
                         .build()
                 )
                 .collect(Collectors.toList());
