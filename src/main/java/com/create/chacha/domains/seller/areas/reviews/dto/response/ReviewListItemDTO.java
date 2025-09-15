@@ -17,7 +17,6 @@ public class ReviewListItemDTO {
     private Long authorId;
     private String authorName;
 
-    private Long productId;
     private String content;
     private LocalDateTime productCreatedAt;      
     private String productRating;         // "4.50/5.0" 
