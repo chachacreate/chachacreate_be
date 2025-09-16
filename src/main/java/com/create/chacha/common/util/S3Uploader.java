@@ -90,6 +90,13 @@ public class S3Uploader {
         return "https://" + bucketName + ".s3.amazonaws.com/" + thumbnailKey;
     }
 
+    // -------------------- Full URL → 썸네일 Full URL --------------------
+    public String getThumbnailUrlByFullUrl(String fullUrl) {
+        if (fullUrl == null || fullUrl.isEmpty()) return null;
+        return fullUrl.replace("images/original/", "images/thumbnail/")
+                .replace(".webp", "_thumb.webp");
+    }
+
     // -------------------- 내부 업로드 헬퍼 --------------------
     private void uploadToS3(InputStream inputStream, String key) throws Exception {
         byte[] bytes = inputStream.readAllBytes(); // byte로 읽어야 이미지 깨짐 없이 가능
