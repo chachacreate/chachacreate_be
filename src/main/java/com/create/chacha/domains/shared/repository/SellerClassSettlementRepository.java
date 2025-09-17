@@ -89,7 +89,7 @@ public class SellerClassSettlementRepository {
             WHERE ci2.class_info_id = :classId
               AND ci2.image_sequence = 1
               AND ci2.is_deleted = 0
-              AND ci2.status = 'THUMBNAIL'
+              AND ci2.status = 1
             LIMIT 1
         """;
         String thumbnail = (String) em.createNativeQuery(thumbSql)

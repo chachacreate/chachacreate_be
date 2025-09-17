@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import com.create.chacha.domains.seller.areas.classes.classcrud.repository.ClassImageRepository;
+import com.create.chacha.domains.shared.constants.ImageStatusEnum;
+import com.create.chacha.domains.shared.entity.classcore.ClassImageEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +45,7 @@ public class SellerSettlementServiceImpl implements SellerSettlementService {
     private final SellerProductSettlementRepository productRepository;
     private final SellerMainSettlementRepository mainRepository;
     private final ClassSalesRepository classSalesRepository;
+    private final ClassImageRepository classImageRepository;
 
     private static final DateTimeFormatter YM = DateTimeFormatter.ofPattern("yyyy-MM");
 
@@ -70,8 +74,19 @@ public class SellerSettlementServiceImpl implements SellerSettlementService {
         if (legacyStore == null || legacyStore.getStoreId() == null) return null;
         Long storeId = legacyStore.getStoreId().longValue();
 
+        // 클래스 전체 조회 코드 인용
+        String thumbnailUrl = classImageRepository
+                .findFirstByClassInfo_IdAndStatusAndImageSequenceAndIsDeletedFalseOrderByIdAsc(
+                        classId, ImageStatusEnum.THUMBNAIL, 1
+                )
+                .map(ClassImageEntity::getUrl)
+                .orElse(null);
+
         // 2) 현재 DB에서 소속 검증(storeId + classId) + 일별 합계/썸네일/클래스명 조회
-        return repository.findClassDailySettlement(storeId, classId);
+        ClassDailySettlementResponseDTO response = repository.findClassDailySettlement(storeId, classId);
+        response.setThumbnailUrl(thumbnailUrl);
+
+        return response;
     }
 
     @Override
