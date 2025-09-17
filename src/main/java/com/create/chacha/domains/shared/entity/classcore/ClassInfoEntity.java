@@ -39,6 +39,10 @@ public class ClassInfoEntity extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "store_id", nullable = false)
     private StoreEntity store;
+    
+ // 🔸 추가: 읽기 전용 스칼라 컬럼 매핑 (조인 없이 필터 용도)
+    @Column(name = "store_id", insertable = false, updatable = false)
+    private Long storeId;
 
     /**
      * 클래스명
