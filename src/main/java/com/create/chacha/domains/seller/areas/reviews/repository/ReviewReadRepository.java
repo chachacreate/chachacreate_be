@@ -31,24 +31,22 @@ public interface ReviewReadRepository extends JpaRepository<ReviewEntity, Long> 
     
     // 전체 리뷰 조회
     @Query(value =
-    	    "SELECT " +
-    	    "  r.id AS reviewId, " +
-    	    "  r.created_at AS reviewCreatedAt, " +
-    	    "  r.updated_at AS reviewUpdatedAt, " +
-    	    "  m.id AS authorId, " +
-    	    "  m.name AS authorName, " +
-    	    "  r.content AS content, " +
+            "SELECT " +
+            "  r.id AS reviewId, " +
+            "  r.created_at AS reviewCreatedAt, " +
+            "  r.updated_at AS reviewUpdatedAt, " +
+            "  m.id AS authorId, " +
+            "  m.name AS authorName, " +
+            "  r.content AS content, " +
             "  r.product_id AS productId, " +
-    	    "  (SELECT COUNT(*) FROM review_like rl " +
-    	    "    WHERE rl.review_id = r.id AND rl.is_deleted = 0) AS likeCount, " +
-            "  CONCAT(FORMAT(IFNULL((SELECT ROUND(AVG(r2.rating) * 2) / 2 " +
-            "  FROM review r2 " +
-            "  WHERE r2.product_id = r.product_id AND r2.is_deleted = 0), 0), 1), '/5.0') AS productRating " +
-    	    "FROM review r " +
-    	    "JOIN `member` m ON m.id = r.member_id " +
-    	    "WHERE r.is_deleted = 0 " +
-    	    "ORDER BY r.created_at DESC",    /* <-- 리뷰 최신순 */
-    	    nativeQuery = true)
+            "  (SELECT COUNT(*) FROM review_like rl " +
+            "    WHERE rl.review_id = r.id AND rl.is_deleted = 0) AS likeCount, " +
+            "  CONCAT(FORMAT(r.rating, 1), '/5.0') AS productRating " +
+            "FROM review r " +
+            "JOIN `member` m ON m.id = r.member_id " +
+            "WHERE r.is_deleted = 0 " +
+            "ORDER BY r.created_at DESC",
+            nativeQuery = true)
     List<ReviewRow> findReviewsOnly();
 
     @Query("SELECT r.member.name FROM ReviewEntity r WHERE r.id = :reviewId AND r.isDeleted = false")
