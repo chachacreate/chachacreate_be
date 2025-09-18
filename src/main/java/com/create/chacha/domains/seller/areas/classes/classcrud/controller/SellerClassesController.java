@@ -37,17 +37,17 @@ public class SellerClassesController {
     // 클래스 수정 (멀티파트)
     // =========================
     @PatchMapping(value = "/classes/{classId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<ClassUpdateResponseDTO>> update(
+    public ApiResponse<ClassUpdateResponseDTO> update(
             @PathVariable("storeUrl") String storeUrl,
             @PathVariable("classId") Long classId,
             @RequestPart(value = "clazz", required = false) ClassUpdateRequestDTO.ClassCorePayload clazz,
-            @RequestPart(value = "thumbnails", required = false) MultipartFile[] thumbnails,
+            @RequestPart(value = "thumbnail", required = false) MultipartFile[] thumbnail,
             @RequestPart(value = "descriptions", required = false) MultipartFile[] descriptions,
             @RequestPart(value = "replaceDescriptionSeqs", required = false) Integer[] replaceDescriptionSeqs
     ) {
         ClassUpdateRequestDTO req = new ClassUpdateRequestDTO();
         req.setClazz(clazz);
-        req.setThumbnails(thumbnails);
+        req.setThumbnails(thumbnail);
         req.setDescriptions(descriptions);
         req.setReplaceDescriptionSeqs(replaceDescriptionSeqs);
 
@@ -55,49 +55,39 @@ public class SellerClassesController {
 
         // 서비스가 null 반환 시 404
         if (body == null) {
-            return ResponseEntity
-                    .status(ResponseCode.SELLER_CLASS_FORM_NOT_FOUND.getStatus())
-                    .body(new ApiResponse<>(ResponseCode.SELLER_CLASS_FORM_NOT_FOUND, null));
+            return new ApiResponse<>(ResponseCode.SELLER_CLASS_FORM_NOT_FOUND, null);
         }
 
-        return ResponseEntity
-                .status(ResponseCode.SELLER_CLASS_UPDATE_OK.getStatus())
-                .body(new ApiResponse<>(ResponseCode.SELLER_CLASS_UPDATE_OK, body));
+        return new ApiResponse<>(ResponseCode.SELLER_CLASS_UPDATE_OK, body);
     }
 
     // =========================
     // 클래스 수정 폼 조회
     // =========================
     @GetMapping("/classes/{classId}")
-    public ResponseEntity<ApiResponse<ClassUpdateFormResponseDTO>> getClassForUpdate(
+    public ApiResponse<ClassUpdateFormResponseDTO> getClassForUpdate(
             @PathVariable("storeUrl") String storeUrl,
             @PathVariable("classId") Long classId
     ) {
         ClassUpdateFormResponseDTO body = sellerClassService.getClassForUpdate(storeUrl, classId);
 
         if (body == null) {
-            return ResponseEntity
-                    .status(ResponseCode.SELLER_CLASS_FORM_NOT_FOUND.getStatus())
-                    .body(new ApiResponse<>(ResponseCode.SELLER_CLASS_FORM_NOT_FOUND, null));
+            return new ApiResponse<>(ResponseCode.SELLER_CLASS_FORM_NOT_FOUND, null);
         }
-        return ResponseEntity
-                .status(ResponseCode.SELLER_CLASS_FORM_FOUND.getStatus())
-                .body(new ApiResponse<>(ResponseCode.SELLER_CLASS_FORM_FOUND, body));
+        return new ApiResponse<>(ResponseCode.SELLER_CLASS_FORM_FOUND, body);
     }
 
     // =========================
     // 삭제/복구 다중 토글 (0 ↔ 1)
     // =========================
     @PatchMapping("/classes/delete")
-    public ResponseEntity<ApiResponse<ClassDeletionToggleResponseDTO>> toggleDeletion(
+    public ApiResponse<ClassDeletionToggleResponseDTO> toggleDeletion(
             @PathVariable("storeUrl") String storeUrl,
             @RequestBody ClassDeletionToggleRequestDTO request
     ) {
         // 요청 자체가 비었을 때 400
         if (request == null || request.getClassIds() == null || request.getClassIds().isEmpty()) {
-            return ResponseEntity
-                    .status(ResponseCode.SELLER_CLASS_TOGGLE_BAD_REQUEST.getStatus())
-                    .body(new ApiResponse<>(ResponseCode.SELLER_CLASS_TOGGLE_BAD_REQUEST, null));
+            return new ApiResponse<>(ResponseCode.SELLER_CLASS_TOGGLE_BAD_REQUEST, null);
         }
 
         ClassDeletionToggleResponseDTO body =
@@ -105,16 +95,12 @@ public class SellerClassesController {
 
         // 서비스에서 대상 없음 등으로 null 주면 404
         if (body == null) {
-            return ResponseEntity
-                    .status(ResponseCode.SELLER_CLASS_TOGGLE_NOT_FOUND.getStatus())
-                    .body(new ApiResponse<>(ResponseCode.SELLER_CLASS_TOGGLE_NOT_FOUND, null));
+            return new ApiResponse<>(ResponseCode.SELLER_CLASS_TOGGLE_NOT_FOUND, null);
         }
 
         // 필수 카운트가 null이면 요청 불량으로 간주(400)
         if (body.getRequestedCount() == null) {
-            return ResponseEntity
-                    .status(ResponseCode.SELLER_CLASS_TOGGLE_BAD_REQUEST.getStatus())
-                    .body(new ApiResponse<>(ResponseCode.SELLER_CLASS_TOGGLE_BAD_REQUEST, body));
+            return new ApiResponse<>(ResponseCode.SELLER_CLASS_TOGGLE_BAD_REQUEST, body);
         }
 
         int requested = body.getRequestedCount();
@@ -123,17 +109,11 @@ public class SellerClassesController {
         int success = toggledDeleted + toggledRestored;
 
         if (success == 0) {
-            return ResponseEntity
-                    .status(ResponseCode.SELLER_CLASS_TOGGLE_NOT_FOUND.getStatus())
-                    .body(new ApiResponse<>(ResponseCode.SELLER_CLASS_TOGGLE_NOT_FOUND, body));
+            return new ApiResponse<>(ResponseCode.SELLER_CLASS_TOGGLE_NOT_FOUND, body);
         } else if (success < requested) {
-            return ResponseEntity
-                    .status(ResponseCode.SELLER_CLASS_TOGGLE_PARTIAL.getStatus())
-                    .body(new ApiResponse<>(ResponseCode.SELLER_CLASS_TOGGLE_PARTIAL, body));
+            return new ApiResponse<>(ResponseCode.SELLER_CLASS_TOGGLE_PARTIAL, body);
         } else {
-            return ResponseEntity
-                    .status(ResponseCode.SELLER_CLASS_TOGGLE_OK.getStatus())
-                    .body(new ApiResponse<>(ResponseCode.SELLER_CLASS_TOGGLE_OK, body));
+            return new ApiResponse<>(ResponseCode.SELLER_CLASS_TOGGLE_OK, body);
         }
     }
 
@@ -141,26 +121,22 @@ public class SellerClassesController {
     // 클래스 목록 조회
     // =========================
     @GetMapping("/classes")
-    public ResponseEntity<ApiResponse<List<ClassListItemResponseDTO>>> getClasses(
+    public ApiResponse<List<ClassListItemResponseDTO>> getClasses(
             @PathVariable("storeUrl") String storeUrl
     ) {
         List<ClassListItemResponseDTO> body = sellerClassService.getClassesByStoreUrl(storeUrl);
 
         if (body == null || body.isEmpty()) {
-            return ResponseEntity
-                    .status(ResponseCode.SELLER_CLASSES_NOT_FOUND.getStatus())
-                    .body(new ApiResponse<>(ResponseCode.SELLER_CLASSES_NOT_FOUND, null));
+            return new ApiResponse<>(ResponseCode.SELLER_CLASSES_NOT_FOUND, null);
         }
-        return ResponseEntity
-                .status(ResponseCode.SELLER_CLASSES_FOUND.getStatus())
-                .body(new ApiResponse<>(ResponseCode.SELLER_CLASSES_FOUND, body));
+        return new ApiResponse<>(ResponseCode.SELLER_CLASSES_FOUND, body);
     }
 
     // =========================
     // 클래스 등록 (멀티파트)
     // =========================
     @PostMapping(value = "/classes", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<List<Long>>> create(
+    public ApiResponse<List<Long>> create(
             @PathVariable("storeUrl") String storeUrl,
             @RequestPart("clazzes") String clazzesJson,
             @RequestParam(required = false) MultiValueMap<String, MultipartFile> fileMap
@@ -178,9 +154,7 @@ public class SellerClassesController {
         }
 
         if (cores.isEmpty()) {
-            return ResponseEntity
-                    .status(ResponseCode.SELLER_CLASS_CREATE_BAD_REQUEST.getStatus())
-                    .body(new ApiResponse<>(ResponseCode.SELLER_CLASS_CREATE_BAD_REQUEST, null));
+            return new ApiResponse<>(ResponseCode.SELLER_CLASS_CREATE_BAD_REQUEST, null);
         }
 
         // 요청 DTO 조립 + 파일 매칭
@@ -204,17 +178,11 @@ public class SellerClassesController {
         List<Long> ids = sellerClassService.createClasses(storeUrl, reqs);
 
         if (ids == null || ids.isEmpty()) {
-            return ResponseEntity
-                    .status(ResponseCode.SELLER_CLASS_CREATE_BAD_REQUEST.getStatus())
-                    .body(new ApiResponse<>(ResponseCode.SELLER_CLASS_CREATE_BAD_REQUEST, null));
+            return new ApiResponse<>(ResponseCode.SELLER_CLASS_CREATE_BAD_REQUEST, null);
         } else if (ids.size() < reqs.size()) {
-            return ResponseEntity
-                    .status(ResponseCode.SELLER_CLASS_CREATE_PARTIAL.getStatus())
-                    .body(new ApiResponse<>(ResponseCode.SELLER_CLASS_CREATE_PARTIAL, ids));
+            return new ApiResponse<>(ResponseCode.SELLER_CLASS_CREATE_PARTIAL, ids);
         } else {
-            return ResponseEntity
-                    .status(ResponseCode.SELLER_CLASS_CREATE_CREATED.getStatus())
-                    .body(new ApiResponse<>(ResponseCode.SELLER_CLASS_CREATE_CREATED, ids));
+            return new ApiResponse<>(ResponseCode.SELLER_CLASS_CREATE_CREATED, ids);
         }
     }
 
