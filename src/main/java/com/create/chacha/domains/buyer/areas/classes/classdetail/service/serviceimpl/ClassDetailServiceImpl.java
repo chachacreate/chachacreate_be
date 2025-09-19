@@ -55,12 +55,14 @@ public class ClassDetailServiceImpl implements ClassDetailService {
         // 레거시에서 스토어 정보 조회 (DB의 store 테이블이 없어도 OK)
         String storeName = null;
         String storeContent = null;
+        String storeUrl = null;
         try {
             if (storeId != null) {
                 var legacyStore = legacyAPIUtil.getLegacyStoreDataById(storeId);
                 if (legacyStore != null) {
                     storeName = legacyStore.getStoreName();
                     storeContent = legacyStore.getStoreDetail();
+                    storeUrl = legacyStore.getStoreUrl();
                 }
             }
         } catch (Exception e) {
@@ -81,6 +83,7 @@ public class ClassDetailServiceImpl implements ClassDetailService {
                 .storeId(storeId)           // ← FK 그대로 사용(Long)
                 .storeName(storeName)       // ← 레거시에서 채움(없으면 null)
                 .storeContent(storeContent) // ← 레거시에서 채움(없으면 null)
+                .storeUrl(storeUrl)
                 .build();
     }
 

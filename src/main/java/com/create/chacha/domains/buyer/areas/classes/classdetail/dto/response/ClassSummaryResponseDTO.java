@@ -21,4 +21,5 @@ public class ClassSummaryResponseDTO {
     private Long storeId;
     private String storeName;
     private String storeContent;
+    private String storeUrl;
 }
