@@ -10,9 +10,13 @@ import lombok.ToString;
 @ToString
 @Builder
 public class OrderStatusCountResponseDTO {
-	
-		private long newOrders;      // 신규 주문 (ORDER_OK)
-	    private long delivered;      // 배송 완료
-	    private long cancelRequests; // 취소 요청
-	    private long refunds;        // 환불 완료
+    // 각 주문 상태당 총 개수
+    private long totalCount;        // 총 주문수
+    private long orderOkCount;      // 신규 주문(주문완료) 수
+    private long shippedCount;      // 발송완료 수
+    private long deliveredCount;    // 배송완료 슈
+	private long cancelRqCount;     // 취소요청 수
+    private long cancelOkCount;     // 취소완료 수
+    private long refundRqCount;     // 환불요청 수
+	private long refundOkCount;     // 환불완료 수
 }
