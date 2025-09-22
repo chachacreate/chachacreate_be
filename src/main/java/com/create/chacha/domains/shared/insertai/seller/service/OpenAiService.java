@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.ExchangeStrategies;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 @PropertySource("classpath:application.properties")
@@ -17,17 +19,7 @@ public class OpenAiService {
     @Value("${openai.api.key}")
     private String openaiApiKey;
 
-    private WebClient client() {
-        ExchangeStrategies strategies = ExchangeStrategies.builder()
-                .codecs(c -> c.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
-                .build();
-
-        return WebClient.builder()
-                .baseUrl("https://api.openai.com")
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + openaiApiKey)
-                .exchangeStrategies(strategies)
-                .build();
-    }
+    private final RestTemplate restTemplate = new RestTemplate();
 
     public String generateText(String system, String user) {
         String body = """
@@ -42,16 +34,21 @@ public class OpenAiService {
         """.formatted(json(system), json(user));
 
         try {
-            String resp = client().post()
-                    .uri("/v1/chat/completions")
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .bodyValue(body)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(openaiApiKey);
+
+            HttpEntity<String> request = new HttpEntity<>(body, headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    "https://api.openai.com/v1/chat/completions",
+                    HttpMethod.POST,
+                    request,
+                    String.class
+            );
 
             ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(resp);
+            JsonNode root = mapper.readTree(response.getBody());
             return root.path("choices").get(0).path("message").path("content").asText(null);
         } catch (Exception e) {
             e.printStackTrace();
