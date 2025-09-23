@@ -2,6 +2,7 @@ package com.create.chacha.domains.buyer.areas.mainhome.main.controller;
 
 import com.create.chacha.common.ApiResponse;
 import com.create.chacha.common.constants.ResponseCode;
+import com.create.chacha.domains.buyer.areas.mainhome.main.dto.response.HomeClassDTO;
 import com.create.chacha.domains.buyer.areas.mainhome.main.dto.response.HomeProductDTO;
 import com.create.chacha.domains.buyer.areas.mainhome.main.service.MainPageService;
 import lombok.RequiredArgsConstructor;
@@ -40,5 +41,18 @@ public class HomeMainController {
         List<HomeProductDTO> result = mainPageService.getProductList(
                 null, d, u, keyword, sort);
         return ResponseEntity.ok(new ApiResponse<>(ResponseCode.OK, result));
+    }
+    
+    @GetMapping("/main/class")
+    public ResponseEntity<ApiResponse<List<HomeClassDTO>>> getMainClasses(
+            @RequestParam(name = "limit", required = false, defaultValue = "20") int limit
+    ) {
+        List<HomeClassDTO> data = mainPageService.getClassesByRemainSeatAsc(limit);
+
+        ResponseCode code = data.isEmpty()
+                ? ResponseCode.CLASSES_NOT_FOUND
+                : ResponseCode.CLASSES_FOUND;
+
+        return ResponseEntity.ok(new ApiResponse<>(code, data));
     }
 }
