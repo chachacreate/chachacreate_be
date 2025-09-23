@@ -5,9 +5,13 @@ import com.create.chacha.domains.seller.areas.store.custom.dto.response.StoreCus
 
 public interface SellerStoreCustomService {
 	
-	// 스토어 커스텀 수정
-	StoreCustomGetResponseDTO updateStoreCustom(String storeUrl, StoreCustomUpdateRequestDTO request); // 수정
-	
-	// 스토어 커스텀 조회
-	StoreCustomGetResponseDTO getStoreCustom(String storeUrl);
+	/** PATCH 업서트: created면 201, 아니면 200 */
+    UpsertResult patchUpsert(String storeUrl, StoreCustomUpdateRequestDTO req);
+    StoreCustomGetResponseDTO getStoreCustom(String storeUrl);
+
+    @lombok.Value
+    class UpsertResult {
+        boolean created;
+        StoreCustomGetResponseDTO body;
+    }
 }

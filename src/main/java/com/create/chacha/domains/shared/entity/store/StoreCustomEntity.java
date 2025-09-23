@@ -25,19 +25,10 @@ import java.time.LocalDateTime;
 @EntityListeners(value = AuditingEntityListener.class) // 변경이 일어나면 자동으로 넣어줌
 public class StoreCustomEntity{
 
-    /**
-     * StoreEntity의 PK를 공유하는 기본 키 (FK & PK)
-     */
+	/** 레거시 store PK (FK 아님) = 이 테이블의 PK */
     @Id
-    private Long id;
-
-    /**
-     * 스토어 (PK + FK 매핑)
-     */
-    @MapsId
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "store_id") // store_custom.id = store.id
-    private StoreEntity store;
+    @Column(name = "store_id")
+    private Long storeId;
 
     /**
      * 폰트 메타데이터 (StoreFontEntity 1:1 관계)
