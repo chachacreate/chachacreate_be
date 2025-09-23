@@ -76,6 +76,6 @@ public class StoreEntity extends BaseEntity {
     /**
      * StoreCustomEntity와 1:1 매핑 (store.id = store_custom.id)
      */
-    @OneToOne(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
-    private StoreCustomEntity storeCustomEntity;
+    //@OneToOne(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
+    //private StoreCustomEntity storeCustomEntity;
 }

@@ -124,6 +124,7 @@ public enum ResponseCode {
 	SELLER_STORE_CUSTOM_FOUND(200, "스토어 커스텀 조회 성공"),
 	SELLER_STORE_CUSTOM_NOT_FOUND(404, "스토어 커스텀 설정이 없습니다."),
 	SELLER_STORE_CUSTOM_UPDATED(200, "스토어 커스텀 수정 성공"),
+	SELLER_STORE_CUSTOM_CREATED(201, "스토어 커스텀 생성 성공"),
 	SELLER_STORE_CUSTOM_BAD_REQUEST(400, "스토어 커스텀 요청이 올바르지 않습니다."),
 
     CLASS_RESERVATIONS_FOUND(200, "클래스 예약 현황 조회 성공"),

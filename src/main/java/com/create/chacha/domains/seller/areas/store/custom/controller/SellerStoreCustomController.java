@@ -20,36 +20,32 @@ public class SellerStoreCustomController {
 
     // 스토어 커스텀 수정 (부분 업데이트)
     @PatchMapping("/custom")
-    public ResponseEntity<ApiResponse<StoreCustomGetResponseDTO>> updateCustom(
+    public ResponseEntity<ApiResponse<StoreCustomGetResponseDTO>> patchCustom(
             @PathVariable("storeUrl") String storeUrl,
             @RequestBody StoreCustomUpdateRequestDTO request
     ) {
-        StoreCustomGetResponseDTO body = sellerStoreCustomService.updateStoreCustom(storeUrl, request);
-
-        if (body == null) {
+        var result = sellerStoreCustomService.patchUpsert(storeUrl, request);
+        if (result.isCreated()) {
             return ResponseEntity
-                    .status(ResponseCode.SELLER_STORE_CUSTOM_NOT_FOUND.getStatus())
-                    .body(new ApiResponse<>(ResponseCode.SELLER_STORE_CUSTOM_NOT_FOUND, null));
+                    .status(ResponseCode.SELLER_STORE_CUSTOM_CREATED.getStatus()) // 201
+                    .body(new ApiResponse<>(ResponseCode.SELLER_STORE_CUSTOM_CREATED, result.getBody()));
         }
-
         return ResponseEntity
-                .status(ResponseCode.SELLER_STORE_CUSTOM_UPDATED.getStatus())
-                .body(new ApiResponse<>(ResponseCode.SELLER_STORE_CUSTOM_UPDATED, body));
+                .status(ResponseCode.SELLER_STORE_CUSTOM_UPDATED.getStatus())     // 200
+                .body(new ApiResponse<>(ResponseCode.SELLER_STORE_CUSTOM_UPDATED, result.getBody()));
     }
 
-    // 스토어 커스텀 조회
+    /** 조회 */
     @GetMapping("/custom")
     public ResponseEntity<ApiResponse<StoreCustomGetResponseDTO>> getCustom(
             @PathVariable("storeUrl") String storeUrl
     ) {
         StoreCustomGetResponseDTO body = sellerStoreCustomService.getStoreCustom(storeUrl);
-
         if (body == null) {
             return ResponseEntity
                     .status(ResponseCode.SELLER_STORE_CUSTOM_NOT_FOUND.getStatus())
                     .body(new ApiResponse<>(ResponseCode.SELLER_STORE_CUSTOM_NOT_FOUND, null));
         }
-
         return ResponseEntity
                 .status(ResponseCode.SELLER_STORE_CUSTOM_FOUND.getStatus())
                 .body(new ApiResponse<>(ResponseCode.SELLER_STORE_CUSTOM_FOUND, body));
