@@ -24,5 +24,5 @@ public class SellerClassReservationStatsResponseDTO {
     private final LocalDateTime rangeStart;
     private final LocalDateTime rangeEnd;
     private final List<SellerClassReservationStatsItemDTO> items;
-    private final long total;
+    private final long total; // 클래스 예약된 횟수
 }

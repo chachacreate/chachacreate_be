@@ -52,4 +52,33 @@ public interface ClassReservationStatsRepository extends JpaRepository<ClassRese
             @Param("end") LocalDateTime end,
             @Param("classInfoId") Integer classInfoId
     );
+
+    @Query(value = """
+    SELECT COUNT(*) 
+      FROM class_reservation cr
+     WHERE cr.class_info_id = :classId
+       AND cr.status = 'ORDER_OK'
+       AND (:bucket IS NULL OR HOUR(cr.reserved_time) = :bucket) -- 시간별
+       AND cr.reserved_time >= :start
+       AND cr.reserved_time < :end
+    """, nativeQuery = true)
+    long countByHourForClass(@Param("classId") Long classId,
+                             @Param("bucket") Integer hour,
+                             @Param("start") LocalDateTime start,
+                             @Param("end") LocalDateTime end);
+
+    @Query(value = """
+    SELECT COUNT(*) 
+      FROM class_reservation cr
+     WHERE cr.class_info_id = :classId
+       AND cr.status = 'ORDER_OK'
+       AND (:bucket IS NULL OR DAYOFWEEK(cr.reserved_time) = :bucket) -- 요일별
+       AND cr.reserved_time >= :start
+       AND cr.reserved_time < :end
+    """, nativeQuery = true)
+    long countByWeekdayForClass(@Param("classId") Long classId,
+                                @Param("bucket") Integer weekday,
+                                @Param("start") LocalDateTime start,
+                                @Param("end") LocalDateTime end);
+
 }

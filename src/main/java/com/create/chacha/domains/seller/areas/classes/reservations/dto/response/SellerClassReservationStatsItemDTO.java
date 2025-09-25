@@ -17,4 +17,5 @@ public class SellerClassReservationStatsItemDTO {
     private final int bucket;
     private final String label;
     private final long count;
+    private int price;         // 클래스 단가
 }

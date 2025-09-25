@@ -8,6 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import com.create.chacha.domains.buyer.areas.classes.classlist.repository.ClassInfoRepository;
+import com.create.chacha.domains.seller.areas.classes.classcrud.repository.StoreRepository;
+import com.create.chacha.domains.shared.entity.classcore.ClassInfoEntity;
+import com.create.chacha.domains.shared.entity.store.StoreEntity;
+import org.springframework.cglib.core.ClassInfo;
 import org.springframework.stereotype.Service;
 
 import com.create.chacha.common.util.LegacyAPIUtil;
@@ -33,6 +38,8 @@ public class SellerClassReservationStatsServiceImpl implements SellerClassReserv
 
 	private final ClassReservationStatsRepository statsRepo;
 	private final LegacyAPIUtil legacyAPIUtil; // ✅ storeId 얻기 용
+    private final ClassInfoRepository classInfoRepository;
+    private final StoreRepository storeRepository;
 
 	@Override
 	public SellerClassReservationStatsResponseDTO getMonthlyStatsForStore(String storeUrl, Integer month,
@@ -84,7 +91,7 @@ public class SellerClassReservationStatsServiceImpl implements SellerClassReserv
 		var rows = "weekday".equals(dim) ? statsRepo.countByWeekdayForStoreId(storeId, start, end, classInfoId)
 				: statsRepo.countByHourForStoreId(storeId, start, end, classInfoId);
 
-		// (4) 버킷 채우기 + 합계
+		// (4) 버킷 채우기 + 합계 + 가격
 		List<SellerClassReservationStatsItemDTO> items = new ArrayList<>();
 		long total = 0;
 
@@ -96,11 +103,25 @@ public class SellerClassReservationStatsServiceImpl implements SellerClassReserv
 					counts[b] = r.getCnt() == null ? 0 : r.getCnt();
 			});
 			String[] labels = { "", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
-			for (int d = 1; d <= 7; d++) {
-				long c = counts[d];
-				items.add(new SellerClassReservationStatsItemDTO(d, labels[d], c));
-				total += c;
-			}
+            for (int d = 1; d <= 7; d++) {
+                if (classInfoId != null) {
+                    // 단일 클래스
+                    int price = classInfoRepository.findById(classInfoId.longValue())
+                            .orElseThrow(() -> new IllegalArgumentException("classInfoId 없음"))
+                            .getPrice();
+                    long c = counts[d];
+                    items.add(new SellerClassReservationStatsItemDTO(d, labels[d], c, price));
+                } else {
+                    // 스토어 전체 → 클래스별 count 합산
+                    List<ClassInfoEntity> classList = classInfoRepository.findByStoreId(storeId);
+                    for (ClassInfoEntity cEntity : classList) {
+                        long classCount = statsRepo.countByWeekdayForClass(cEntity.getId(), d, start, end);
+                        int price = cEntity.getPrice();
+                        items.add(new SellerClassReservationStatsItemDTO(d, labels[d], classCount, price));
+                    }
+                }
+                total += counts[d]; // 전체 count 합계
+            }
 		} else {
 			long[] counts = new long[24]; // 0~23
 			rows.forEach(r -> {
@@ -108,12 +129,23 @@ public class SellerClassReservationStatsServiceImpl implements SellerClassReserv
 				if (b != null && b >= 0 && b <= 23)
 					counts[b] = r.getCnt() == null ? 0 : r.getCnt();
 			});
-			for (int h = 0; h < 24; h++) {
-				String label = String.format("%02d:00", h);
-				long c = counts[h];
-				items.add(new SellerClassReservationStatsItemDTO(h, label, c));
-				total += c;
-			}
+            for (int h = 0; h < 24; h++) {
+                if (classInfoId != null) {
+                    int price = classInfoRepository.findById(classInfoId.longValue())
+                            .orElseThrow(() -> new IllegalArgumentException("classInfoId 없음"))
+                            .getPrice();
+                    long c = counts[h];
+                    items.add(new SellerClassReservationStatsItemDTO(h, String.format("%02d:00", h), c, price));
+                } else {
+                    List<ClassInfoEntity> classList = classInfoRepository.findByStoreId(storeId);
+                    for (ClassInfoEntity classEntity : classList) {
+                        long classCount = statsRepo.countByHourForClass(classEntity.getId(), h, start, end);
+                        int price = classEntity.getPrice();
+                        items.add(new SellerClassReservationStatsItemDTO(h, String.format("%02d:00", h), classCount, price));
+                    }
+                }
+                total += counts[h];
+            }
 		}
 
 		// (5) 응답

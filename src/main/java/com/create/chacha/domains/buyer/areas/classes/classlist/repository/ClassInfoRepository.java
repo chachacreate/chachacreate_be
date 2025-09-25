@@ -147,4 +147,6 @@ public interface ClassInfoRepository extends JpaRepository<ClassInfoEntity, Long
 	@EntityGraph(attributePaths = { "store" })
 	@Query("SELECT c FROM ClassInfoEntity c WHERE c.id = :id")
 	Optional<ClassInfoEntity> findByClassId(@Param("id") Long id);
+
+    List<ClassInfoEntity> findByStoreId(Long storeId);
 }
