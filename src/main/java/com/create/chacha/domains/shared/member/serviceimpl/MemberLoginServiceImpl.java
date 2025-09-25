@@ -4,6 +4,7 @@ import com.create.chacha.common.util.JwtTokenProvider;
 import com.create.chacha.domains.shared.member.dto.response.TokenResponseDTO;
 import com.create.chacha.domains.shared.constants.MemberRoleEnum;
 import com.create.chacha.domains.shared.entity.member.MemberEntity;
+import com.create.chacha.domains.shared.member.exception.InvalidEmailException;
 import com.create.chacha.domains.shared.member.exception.InvalidPasswordException;
 import com.create.chacha.domains.shared.repository.MemberRepository;
 import com.create.chacha.domains.shared.member.service.MemberLoginService;
@@ -28,7 +29,7 @@ public class MemberLoginServiceImpl implements MemberLoginService {
     @Override
     public TokenResponseDTO login(String email, String password) {
         MemberEntity member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자"));
+                .orElseThrow(() -> new InvalidEmailException("존재하지 않는 사용자입니다."));
 
         if (!passwordEncoder.matches(password, member.getPassword())) {
             throw new InvalidPasswordException("비밀번호 불일치");
