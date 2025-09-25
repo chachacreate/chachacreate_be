@@ -47,6 +47,7 @@ public class NoticeEntity extends BaseEntity {
     /**
      * 중요 여부 (일반 : false, 중요 : true)
      */
+    @Builder.Default
     @Column(columnDefinition = "TINYINT")
     private Boolean isImportant = false;
 }

@@ -47,26 +47,31 @@ public class StoreCustomEntity{
     /**
      * 기본 글자 색상 (default: #000000)
      */
+    @Builder.Default
     private String fontColor = "#000000";
 
     /**
      * 헤더/푸터 색상 (default: #676F58)
      */
+    @Builder.Default
     private String headerFooterColor = "#676F58";
 
     /**
      * 공지사항 색상 (default: #FFF7DB)
      */
+    @Builder.Default
     private String noticeColor = "#FFF7DB";
 
     /**
      * 스토어 설명 영역 색상 (default: #FFF6EE)
      */
+    @Builder.Default
     private String descriptionColor = "#FFF6EE";
 
     /**
      * 인기상품/대표상품 색상 (default: #FFF7DB)
      */
+    @Builder.Default
     private String popularColor = "#FFF7DB";
 
     /*

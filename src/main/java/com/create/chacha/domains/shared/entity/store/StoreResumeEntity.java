@@ -45,6 +45,7 @@ public class StoreResumeEntity{
     /**
      * 이력서 검증 상태
      */
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     private AcceptStatusEnum status = AcceptStatusEnum.PENDING;
     /*

@@ -15,9 +15,9 @@ import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+// Gson 대신 Jackson 사용
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,10 +33,11 @@ public class CheckAccountServiceImpl implements CheckAccountService {
     String REQUEST_URL = "https://api.iamport.kr/users/getToken";
     String PAYMENT_URL = "https://api.iamport.kr/vbanks/holder";
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     public HashMap getAccessToken1(String bank_code, String bank_num) {
 
         HashMap map = new HashMap<>();
-
 
         try {
             // url Http 연결 생성
@@ -45,7 +46,7 @@ public class CheckAccountServiceImpl implements CheckAccountService {
 
             // POST 요청
             conn.setRequestMethod("POST");
-            conn.setDoOutput(true);// outputStreamm으로 post 데이터를 넘김
+            conn.setDoOutput(true);
 
             conn.setRequestProperty("content-Type", "application/json");
             conn.setRequestProperty("Accept", "application/json");
@@ -64,19 +65,18 @@ public class CheckAccountServiceImpl implements CheckAccountService {
             int resposeCode = conn.getResponseCode();
 
             log.info("응답코드 =============" + resposeCode);
-            if (resposeCode == 200) {// 성공
+            if (resposeCode == 200) {
                 BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 StringBuilder sb = new StringBuilder();
                 String line;
                 while ((line = br.readLine()) != null) {
                     sb.append(line + "\n");
                 }
-
                 br.close();
 
-                // 토큰 값 빼기
-                JsonElement jsonElement = JsonParser.parseString(sb.toString());
-                String access_token = jsonElement.getAsJsonObject().getAsJsonObject("response").get("access_token").getAsString();
+                // Jackson으로 토큰 값 빼기
+                JsonNode jsonNode = objectMapper.readTree(sb.toString());
+                String access_token = jsonNode.get("response").get("access_token").asText();
                 log.info("Access Token: " + access_token);
 
                 String query = String.format("?bank_code=%s&bank_num=%s", URLEncoder.encode(bank_code, "UTF-8"),
@@ -106,18 +106,17 @@ public class CheckAccountServiceImpl implements CheckAccountService {
                     String getResponse = getResponseSb.toString();
                     log.info("GET 응답 결과: " + getResponse);
 
-                    JsonParser parser1 = new JsonParser();
-                    JsonObject phoneJson1 = parser1.parse(getResponse).getAsJsonObject();
+                    // Jackson으로 파싱
+                    JsonNode responseNode = objectMapper.readTree(getResponse);
 
                     // 예금주만 값 빼기
-                    String bankHolderInfo = phoneJson1.getAsJsonObject("response").get("bank_holder").getAsString();
+                    String bankHolderInfo = responseNode.get("response").get("bank_holder").asText();
                     log.info("bankHolderInfo: " + bankHolderInfo);
 
                     map.put("bankHolderInfo", bankHolderInfo);
                 } else {
                     map.put("error", getResponseCode);
                 }
-
             }
         } catch (IOException e) {
             e.printStackTrace();

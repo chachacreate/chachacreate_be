@@ -24,6 +24,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     // 로그인 예외
+    @ExceptionHandler(InvalidEmailException.class)
+    public ApiResponse<String> handleEmailException(InvalidEmailException e) {
+        log.warn("이메일 오류: {}", e.getMessage());
+        return new ApiResponse<>(ResponseCode.LOGIN_FAIL, e.getMessage());
+    }
     @ExceptionHandler(InvalidPasswordException.class)
     public ApiResponse<String> handlePasswordException(InvalidPasswordException e) {
         log.warn("비밀번호 오류: {}", e.getMessage());

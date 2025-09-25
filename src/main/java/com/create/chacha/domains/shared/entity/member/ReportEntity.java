@@ -50,6 +50,7 @@ public class ReportEntity extends BaseEntity {
      * 신고 처리 상태
      * <p>0: 미처리, 1: 처리 완료</p>
      */
+    @Builder.Default
     @Column(columnDefinition = "TINYINT")
     private ReportStatusEnum status = ReportStatusEnum.UNPROCESSED;
 }

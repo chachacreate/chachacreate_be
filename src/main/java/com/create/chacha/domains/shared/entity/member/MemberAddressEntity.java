@@ -56,6 +56,7 @@ public class MemberAddressEntity extends BaseEntity {
      * 기본 배송지 여부
      * <p>1: 기본 배송지, 0: 기본 배송지 아님</p>
      */
+    @Builder.Default
     @Column(columnDefinition = "TINYINT")
     private Boolean isDefault = false;
 }
