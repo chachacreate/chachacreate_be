@@ -14,6 +14,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Member;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -35,26 +38,13 @@ public class MemberLoginServiceImpl implements MemberLoginService {
             throw new InvalidPasswordException("비밀번호 불일치");
         }
 
-        String accessToken = jwtTokenProvider.createAccessToken(
-                member.getId(),
-                member.getEmail(),
-                member.getName(),
-                member.getPhone(),
-                member.getMemberRole()
-        );
-        String refreshToken = jwtTokenProvider.createRefreshToken(
-                member.getId(),
-                member.getEmail(),
-                member.getName(),
-                member.getPhone(),
-                member.getMemberRole()
-        );
+        Map<String, String> tokens = makeTokens(member);
 
         // Redis에 RefreshToken 저장
-        redisTemplate.opsForValue().set("RT:" + email, refreshToken,
-                jwtTokenProvider.getExpiration(refreshToken), TimeUnit.MILLISECONDS);
+        redisTemplate.opsForValue().set("RT:" + email, tokens.get("refreshToken"),
+                jwtTokenProvider.getExpiration(tokens.get("refreshToken")), TimeUnit.MILLISECONDS);
 
-        return new TokenResponseDTO(member, accessToken, refreshToken);
+        return new TokenResponseDTO(member, tokens.get("accessToken"), tokens.get("refreshToken"));
     }
 
     @Override
@@ -62,26 +52,13 @@ public class MemberLoginServiceImpl implements MemberLoginService {
         MemberEntity member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자"));
 
-        String accessToken = jwtTokenProvider.createAccessToken(
-                member.getId(),
-                member.getEmail(),
-                member.getName(),
-                member.getPhone(),
-                member.getMemberRole()
-        );
-        String refreshToken = jwtTokenProvider.createRefreshToken(
-                member.getId(),
-                member.getEmail(),
-                member.getName(),
-                member.getPhone(),
-                member.getMemberRole()
-        );
+        Map<String, String> tokens = makeTokens(member);
 
         // Redis에 RefreshToken 저장
-        redisTemplate.opsForValue().set("RT:" + email, refreshToken,
-                jwtTokenProvider.getExpiration(refreshToken), TimeUnit.MILLISECONDS);
+        redisTemplate.opsForValue().set("RT:" + email, tokens.get("refreshToken"),
+                jwtTokenProvider.getExpiration(tokens.get("refreshToken")), TimeUnit.MILLISECONDS);
 
-        return new TokenResponseDTO(member, accessToken, refreshToken);
+        return new TokenResponseDTO(member, tokens.get("accessToken"), tokens.get("refreshToken"));
     }
 
     @Override
@@ -190,34 +167,43 @@ public class MemberLoginServiceImpl implements MemberLoginService {
             MemberEntity member = memberRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자: " + email));
 
-            // 3. 새로운 토큰 발급
-            String newAccessToken = jwtTokenProvider.createAccessToken(
-                    member.getId(),
-                    member.getEmail(),
-                    member.getName(),
-                    member.getPhone(),
-                    member.getMemberRole()
-            );
 
-            String newRefreshToken = jwtTokenProvider.createRefreshToken(
-                    member.getId(),
-                    member.getEmail(),
-                    member.getName(),
-                    member.getPhone(),
-                    member.getMemberRole()
-            );
+            // 3. 새로운 토큰 발급
+            Map<String, String> tokens = makeTokens(member);
 
             // 4. 새 RefreshToken을 Redis에 저장
-            redisTemplate.opsForValue().set("RT:" + email, newRefreshToken,
-                    jwtTokenProvider.getExpiration(newRefreshToken), TimeUnit.MILLISECONDS);
+            redisTemplate.opsForValue().set("RT:" + email, tokens.get("refreshToken"),
+                    jwtTokenProvider.getExpiration(tokens.get("refreshToken")), TimeUnit.MILLISECONDS);
 
             log.info("사용자 토큰 재발급 완료 - 이메일: {}", email);
 
-            return new TokenResponseDTO(member, newAccessToken, newRefreshToken);
+            return new TokenResponseDTO(member, tokens.get("accessToken"), tokens.get("refreshToken"));
 
         } catch (Exception e) {
             log.error("토큰 재발급 중 오류 발생 - 이메일: {}, 오류: {}", email, e.getMessage(), e);
             throw new RuntimeException("토큰 재발급 중 오류가 발생했습니다.", e);
         }
+    }
+
+    private Map<String, String> makeTokens(MemberEntity member) {
+        Map<String, String> map = new HashMap<>();
+        String newAccessToken = jwtTokenProvider.createAccessToken(
+                member.getId(),
+                member.getEmail(),
+                member.getName(),
+                member.getPhone(),
+                member.getMemberRole()
+        );
+
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(
+                member.getId(),
+                member.getEmail(),
+                member.getName(),
+                member.getPhone(),
+                member.getMemberRole()
+        );
+        map.put("accessToken", newAccessToken);
+        map.put("refreshToken", newRefreshToken);
+        return map;
     }
 }
