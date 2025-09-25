@@ -60,11 +60,13 @@ public class StoreEntity extends BaseEntity {
     /**
      * 스토어 상품들의 총 판매 수 합계
      */
+    @Builder.Default
     private Integer saleCount = 0;
 
     /**
      * 스토어 상품들의 총 조회 수 합계
      */
+    @Builder.Default
     private Integer viewCount = 0;
 
     /**

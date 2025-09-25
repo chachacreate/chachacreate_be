@@ -61,6 +61,7 @@ public class MemberEntity extends BaseEntity {
      * 회원 권한
      * <p>USER, SELLER, PERSONAL_SELLER, ADMIN</p>
      */
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     private MemberRoleEnum memberRole = MemberRoleEnum.USER;
 }

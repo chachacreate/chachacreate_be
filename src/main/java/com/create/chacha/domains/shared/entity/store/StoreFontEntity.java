@@ -34,6 +34,7 @@ public class StoreFontEntity {
     /**
      * 글꼴 스타일 (예: Regular, Bold, Italic 등)
      */
+    @Builder.Default
     private String style = "Regular";
 
     /**
