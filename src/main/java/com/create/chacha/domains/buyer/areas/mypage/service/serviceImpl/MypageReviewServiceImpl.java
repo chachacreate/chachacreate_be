@@ -2,6 +2,7 @@ package com.create.chacha.domains.buyer.areas.mypage.service.serviceImpl;
 
 import com.create.chacha.common.util.LegacyAPIUtil;
 import com.create.chacha.common.util.dto.LegacyProductDTO;
+import com.create.chacha.common.util.dto.LegacyStoreDTO;
 import com.create.chacha.domains.buyer.areas.mypage.service.MypageReviewService;
 import com.create.chacha.domains.seller.areas.reviews.dto.response.ReviewListItemDTO;
 import com.create.chacha.domains.shared.repository.MypageReviewRepository;
@@ -36,13 +37,37 @@ public class MypageReviewServiceImpl implements MypageReviewService {
                         pid -> pid,
                         pid -> {
                             try {
-                                return legacyAPIUtil.getLegacyProductData(pid);
+                                LegacyProductDTO p = legacyAPIUtil.getLegacyProductData(pid);
+                                // null-safe 처리: null이면 빈 DTO로 대체
+                                return p != null ? p : new LegacyProductDTO();
                             } catch (Exception e) {
                                 log.error("[mypage-review] 레거시 상품 조회 실패 - productId={}", pid, e);
-                                return null;
+                                return new LegacyProductDTO();
                             }
                         }
                 ));
+
+        // storeId 당 storeUrl 1회 호출
+        Map<Long, LegacyStoreDTO> storeMap = items.stream()
+                .map(ReviewListItemDTO::getProductId)
+                .map(productMap::get)   // LegacyProductDTO 가져오기
+                .filter(Objects::nonNull)
+                .map(LegacyProductDTO::getStoreId)
+                .filter(Objects::nonNull)   // null이면 여기서 걸러짐
+                .distinct()
+                .collect(Collectors.toMap(
+                        sid -> sid.longValue(),
+                        sid -> {
+                            try {
+                                LegacyStoreDTO s = legacyAPIUtil.getLegacyStoreDataById(sid.longValue());
+                                return s != null ? s : new LegacyStoreDTO();
+                            } catch (Exception e) {
+                                log.error("[mypage-review] 레거시 스토어 조회 실패 - storeId={}", sid, e);
+                                return new LegacyStoreDTO();
+                            }
+                        }
+                ));
+
 
         //  레거시 결과 DTO에 채워넣기
         for (ReviewListItemDTO dto : items) {
@@ -50,6 +75,12 @@ public class MypageReviewServiceImpl implements MypageReviewService {
             if (p != null) {
                 dto.setProductName(p.getProductName());
                 dto.setProductThumbnailUrl(p.getThumbnailUrl());
+
+
+                Long storeId = p.getStoreId() != null ? p.getStoreId().longValue() : null;
+                LegacyStoreDTO store = storeId != null ? storeMap.get(storeId) : null;
+                dto.setStoreUrl(store != null ? store.getStoreUrl() : null);
+
             }
             if (dto.getLikeCount() == null) dto.setLikeCount(0);
         }

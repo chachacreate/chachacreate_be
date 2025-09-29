@@ -12,7 +12,8 @@ public class ReviewListItemDTO {
     private Long productId;
     private LocalDateTime reviewCreatedAt;
     private String productThumbnailUrl;   
-    private String productName;          
+    private String productName;
+    private String storeUrl;
 
     private Long authorId;
     private String authorName;
