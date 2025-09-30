@@ -9,6 +9,7 @@ import com.create.chacha.domains.shared.entity.member.MemberEntity;
 import com.create.chacha.domains.shared.entity.product.ProductEntity;
 import com.create.chacha.domains.shared.entity.product.ReviewEntity;
 import com.create.chacha.domains.shared.repository.MemberRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -56,9 +57,9 @@ public class ProductReviewServiceImpl implements ProductReviewService {
     }
 
     @Override
-    public List<ProductReviewResponseDTO> getReviewsByProduct(Long productId) {
+    public List<ProductReviewResponseDTO> getReviewsByProduct(Long productId, Long memberId) {
         // 리뷰 조회 (MySQL)
-        List<ReviewEntity> reviews = reviewRepository.findReviewsByProductId(productId);
+        List<ReviewEntity> reviews = reviewRepository.findReviewsByProductId(productId, memberId);
 
         // 상품 정보 조회 (Oracle)
         LegacyProductDTO product = legacyAPIUtil.getLegacyProductData(productId);
@@ -77,5 +78,64 @@ public class ProductReviewServiceImpl implements ProductReviewService {
                         .build()
                 )
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public ProductReviewResponseDTO getReviewByReviewId(Long reviewId) {
+        ReviewEntity review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new EntityNotFoundException("리뷰를 찾을 수 없습니다."));
+
+        return ProductReviewResponseDTO.builder()
+                .id(review.getId())
+                .memberId(review.getMember().getId())
+                .memberName(review.getMember().getName())
+                .productId(review.getProduct().getId())
+                .productName(review.getProduct().getName())
+                .rating(review.getRating())
+                .content(review.getContent())
+                .reviewDate(review.getCreatedAt())
+                .build();
+    }
+
+    @Override
+    public ProductReviewResponseDTO updateReview(Long productId, Long reviewId, BigDecimal rating, String content, Long memberId) {
+        ReviewEntity review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new EntityNotFoundException("리뷰를 찾을 수 없습니다."));
+
+        if (!review.getMember().getId().equals(memberId)) {
+            throw new RuntimeException("본인의 리뷰만 수정할 수 있습니다.");
+        }
+
+        // 상품 정보 조회 (Oracle)
+        LegacyProductDTO product = legacyAPIUtil.getLegacyProductData(productId);
+
+        review.setRating(rating);
+        review.setContent(content);
+
+        reviewRepository.save(review);
+
+        return ProductReviewResponseDTO.builder()
+                .id(review.getId())
+                .memberId(review.getMember().getId())
+                .memberName(review.getMember().getName())
+                .productId(product.getProductId().longValue())
+                .productName(product.getProductName())
+                .rating(review.getRating())
+                .content(review.getContent())
+                .reviewDate(review.getCreatedAt())
+                .build();
+    }
+
+    @Override
+    public boolean deleteReview(Long reviewId, Long memberId) {
+        ReviewEntity review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new EntityNotFoundException("리뷰를 찾을 수 없습니다."));
+
+        if (!review.getMember().getId().equals(memberId)) {
+            throw new RuntimeException("본인의 리뷰만 삭제할 수 있습니다.");
+        }
+
+        reviewRepository.delete(review);
+        return true;
     }
 }
