@@ -196,8 +196,8 @@ test/
 # 또는 이미 클론한 경우
 - git submodule update --init --recursive
 
-Submodule 업데이트 받기
-# 서브모듈 변경사항이 있을 때마다 실행
+# Submodule 업데이트 받기
+서브모듈 변경사항이 있을 때마다 실행
 - git submodule update --remote
 - git submodule foreach git pull origin main
 
